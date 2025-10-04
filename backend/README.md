@@ -31,10 +31,17 @@ backend/
 
 ## Setup
 
-1. **Install dependencies:**
-   ```bash
-   pip install -e .
-   ```
+You can use uv (recommended) or pip.
+
+1. Install dependencies with uv:
+```bash
+uv sync
+```
+
+Or with pip:
+```bash
+pip install -e .
+```
 
 2. **Configure environment variables:**
    Copy `.env.example` to `.env` and add your Apify API key:
@@ -42,10 +49,11 @@ backend/
    cp .env.example .env
    ```
 
-   Edit `.env`:
-   ```env
-   APIFY_API_KEY=your_apify_api_key_here
-   ```
+Edit `.env`:
+```env
+APIFY_API_KEY=your_apify_api_key_here
+GOOGLE_API_KEY={{your_gemini_api_key}}
+```
 
 ## Running the API
 
@@ -62,6 +70,67 @@ The API will be available at:
 - API: http://localhost:8000
 - Docs: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
+
+## Video Analysis Prototype 🎬
+
+### Аналіз відео креативу з Gemini Vision
+
+Gemini може аналізувати відео напряму і витягати:
+- Хуки (перші 3 сек, тактика, сила)
+- Візуальний стиль (UGC, screencast, ефекти, субтитри)
+- Текст на екрані (OCR з таймкодами)
+- Показ продукту (UI демо, ключові фічі)
+- CTA (таймкоди, канали, сила)
+- Болі/переваги з відео
+- Аудіо/музика
+- Покадровий сторіборд
+- Оцінки якості
+
+**Швидкий тест на кешованому відео:**
+```bash
+export GOOGLE_API_KEY={{YOUR_GEMINI_API_KEY}}
+python demo_video_analysis.py
+```
+
+**Аналіз конкретного відео:**
+```bash
+python -m src.analysis.video_analyzer path/to/video.mp4 output.json
+```
+
+**Примітки:**
+- Використовує Gemini 1.5 Flash за замовчуванням (можна змінити через GEMINI_MODEL)
+- Відео завантажується в Gemini API (короткочасне зберігання)
+- Результат — структурований JSON з усіма деталями
+- Працює з будь-якими відео форматами, що підтримує Gemini
+
+---
+
+## MVP Creative Analysis (local JSON + Gemini)
+
+Run the MVP analyzer on a local creatives JSON (no extra backend requests):
+
+Simple (rule-based, no LLM):
+```bash
+python -m src.analysis.cli --input creatives/"Guru Apps_102120057962217_20251004_152910.json" --window 3:14 --top 3 --mode simple
+```
+
+Gemini (optional):
+```bash
+export GOOGLE_API_KEY={{YOUR_GEMINI_API_KEY}}
+python -m src.analysis.cli --input creatives/"Guru Apps_102120057962217_20251004_152910.json" --window 3:14 --top 3 --mode gemini
+# add --schema to request strict JSON shaping (may increase errors/token usage)
+```
+
+Notes:
+- The tool caches videos into `backend/.cache/videos`.
+
+Output: prints a JSON array of top N analyses and writes per-creative files into `backend/analysis/`.
+
+Options:
+- `--window A:B` active days window filter (default 3:14)
+- `--top N` number of top creatives (default 3)
+- `--mode simple|gemini` analysis engine (default simple)
+- `--schema` enforce Gemini response schema (Gemini mode only)
 
 ## API Usage
 

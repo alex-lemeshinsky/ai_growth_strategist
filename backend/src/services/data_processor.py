@@ -41,10 +41,11 @@ class DataProcessor:
         cards_data = snapshot.get('cards', [])
         cards = [DataProcessor._process_card(card) for card in cards_data]
 
-        # Extract image and video URLs from cards
+        # Extract image and video URLs from cards and snapshot.videos
         image_urls = []
         video_urls = []
 
+        # From cards
         for card in cards_data:
             if card.get('original_image_url'):
                 image_urls.append(card['original_image_url'])
@@ -54,6 +55,13 @@ class DataProcessor:
                 video_urls.append(card['video_hd_url'])
             elif card.get('video_sd_url'):
                 video_urls.append(card['video_sd_url'])
+
+        # From snapshot.videos
+        for v in snapshot.get('videos', []) or []:
+            if v.get('video_hd_url'):
+                video_urls.append(v['video_hd_url'])
+            elif v.get('video_sd_url'):
+                video_urls.append(v['video_sd_url'])
 
         # Remove duplicates while preserving order
         image_urls = list(dict.fromkeys(image_urls))
