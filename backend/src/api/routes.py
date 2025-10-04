@@ -1,10 +1,12 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, BackgroundTasks, Query
 from src.api.models import ParseAdsRequest, ParseAdsResponse, ErrorResponse
-from src.services.apify_service import ApifyService
-from src.services.data_processor import DataProcessor
+from src.db import MongoDB, Task, TaskStatus
+from src.services.task_service import parse_ads_task, analyze_creatives_task
 from src.utils.url_parser import URLParser
-from src.utils.file_manager import FileManager
 import logging
+import uuid
+from datetime import datetime
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -13,21 +15,15 @@ router = APIRouter()
 
 @router.post(
     "/parse-ads",
-    response_model=ParseAdsResponse,
     responses={
         400: {"model": ErrorResponse},
         500: {"model": ErrorResponse}
     }
 )
-async def parse_ads(request: ParseAdsRequest):
+async def parse_ads(request: ParseAdsRequest, background_tasks: BackgroundTasks):
     """
-    Parse Facebook Ads Library URL and extract ad creatives.
-
-    Args:
-        request: ParseAdsRequest containing URL and options
-
-    Returns:
-        ParseAdsResponse with extracted ads data and file location
+    Parse Facebook Ads Library URL - returns task_id for tracking.
+    Background task will extract ads and save to MongoDB.
     """
     try:
         # Validate URL
@@ -37,81 +33,44 @@ async def parse_ads(request: ParseAdsRequest):
                 detail="Invalid Facebook Ads Library URL"
             )
 
-        logger.info(f"Processing request for URL: {request.url}")
-
-        # Initialize services
-        apify_service = ApifyService()
-        file_manager = FileManager()
-
-        # Extract ads using Apify
-        raw_ads = await apify_service.extract_ads_from_url(
+        # Generate task ID
+        task_id = str(uuid.uuid4())
+        
+        # Create task in MongoDB
+        db = MongoDB.get_db()
+        task = Task(
+            task_id=task_id,
             url=request.url,
-            max_results=request.max_results,
-            fetch_all_details=request.fetch_all_details
+            status=TaskStatus.PENDING
         )
-
-        if not raw_ads:
-            return ParseAdsResponse(
-                success=True,
-                message="No ads found for the given URL",
-                ads_count=0,
-                ads=[]
+        await db.tasks.insert_one(task.model_dump())
+        
+        # Start background parsing (fire-and-forget)
+        import asyncio
+        asyncio.create_task(
+            parse_ads_task(
+                task_id=task_id,
+                url=request.url,
+                max_results=request.max_results
             )
-
-        logger.info(f"Successfully extracted {len(raw_ads)} ads")
+        )
         
-        # For now, let's save raw data to JSON file in creatives directory
-        import json
-        import os
-        from datetime import datetime
-        
-        # Create creatives directory if it doesn't exist
-        os.makedirs("creatives", exist_ok=True)
-        
-        # Get page info from first ad
-        page_name = "unknown"
-        page_id = "unknown"
-        if raw_ads and isinstance(raw_ads[0], dict):
-            page_name = raw_ads[0].get('page_name', 'unknown')
-            page_id = raw_ads[0].get('page_id', 'unknown')
-        
-        # Generate filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{page_name}_{page_id}_{timestamp}.json"
-        filepath = f"creatives/{filename}"
-        
-        # Save to file
-        with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump({
-                "extraction_metadata": {
-                    "url": request.url,
-                    "extracted_at": datetime.now().isoformat(),
-                    "total_ads": len(raw_ads),
-                    "page_name": page_name,
-                    "page_id": page_id
-                },
-                "ads": raw_ads
-            }, f, indent=2, ensure_ascii=False)
-        
-        logger.info(f"Saved {len(raw_ads)} ads to {filepath}")
+        logger.info(f"✅ Created task {task_id} for URL: {request.url}")
         
         return {
             "success": True,
-            "message": f"Successfully extracted {len(raw_ads)} ads",
-            "ads_count": len(raw_ads),
-            "output_file": filepath,
-            "page_name": page_name,
-            "page_id": page_id,
-            "ads_sample": raw_ads[:2] if raw_ads else []  # Return first 2 ads as sample
+            "task_id": task_id,
+            "message": "Task created. Use GET /task/{task_id} to check status.",
+            "status": TaskStatus.PENDING
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error processing ads: {str(e)}")
+        logger.error(f"Error creating task: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to process ads: {str(e)}"
+            detail=f"Failed to create task: {str(e)}"
         )
 
 
@@ -148,6 +107,84 @@ async def debug_parse_ads(request: ParseAdsRequest):
             "success": False,
             "error": str(e)
         }
+
+
+@router.get("/tasks")
+async def list_tasks(
+    skip: int = Query(0, ge=0, description="Number of tasks to skip"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum number of tasks to return"),
+    status: Optional[str] = Query(None, description="Filter by status")
+):
+    """
+    List all tasks with pagination and optional status filter.
+    """
+    try:
+        db = MongoDB.get_db()
+        
+        # Build query
+        query = {}
+        if status:
+            query["status"] = status
+        
+        # Get total count
+        total = await db.tasks.count_documents(query)
+        
+        # Get tasks
+        cursor = db.tasks.find(query).sort("created_at", -1).skip(skip).limit(limit)
+        tasks = await cursor.to_list(length=limit)
+        
+        # Remove MongoDB _id field
+        for task in tasks:
+            task.pop("_id", None)
+        
+        return {
+            "success": True,
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+            "tasks": tasks
+        }
+        
+    except Exception as e:
+        logger.error(f"Error listing tasks: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list tasks: {str(e)}"
+        )
+
+
+@router.get("/task/{task_id}")
+async def get_task(task_id: str):
+    """
+    Get detailed information about a specific task.
+    """
+    try:
+        db = MongoDB.get_db()
+        
+        task = await db.tasks.find_one({"task_id": task_id})
+        
+        if not task:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Task {task_id} not found"
+            )
+        
+        # Remove MongoDB _id field
+        task.pop("_id", None)
+        
+        return {
+            "success": True,
+            "task": task
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting task {task_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get task: {str(e)}"
+        )
 
 
 @router.get("/health")

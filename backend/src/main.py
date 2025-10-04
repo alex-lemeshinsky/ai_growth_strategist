@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from src.api.routes import router
+from src.db import MongoDB
 
 # Load environment variables
 load_dotenv()
@@ -53,6 +54,14 @@ async def startup_event():
     """Startup event handler."""
     logger.info("Starting Facebook Ads Library Parser API")
 
+    # Initialize MongoDB connection
+    try:
+        await MongoDB.connect()
+        logger.info("✅ MongoDB connected successfully")
+    except Exception as e:
+        logger.error(f"❌ Failed to connect to MongoDB: {e}")
+        raise
+
     # Check for required environment variables
     if not os.environ.get('APIFY_API_KEY'):
         logger.warning("APIFY_API_KEY not set in environment variables")
@@ -62,6 +71,13 @@ async def startup_event():
 async def shutdown_event():
     """Shutdown event handler."""
     logger.info("Shutting down Facebook Ads Library Parser API")
+    
+    # Close MongoDB connection
+    try:
+        await MongoDB.disconnect()
+        logger.info("✅ MongoDB disconnected successfully")
+    except Exception as e:
+        logger.error(f"❌ Error disconnecting MongoDB: {e}")
 
 
 if __name__ == "__main__":
