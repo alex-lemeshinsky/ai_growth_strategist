@@ -191,13 +191,23 @@ async def send_message(request: SendMessageRequest):
             for msg in history_docs
         ]
 
+        # Get patterns from task if available
+        patterns = None
+        if session.task_id:
+            task = await db.tasks.find_one({"task_id": session.task_id})
+            if task:
+                from src.services.patterns_extractor import extract_patterns_summary
+                patterns = extract_patterns_summary(task)
+                logger.info(f"✅ Loaded patterns from task {session.task_id}")
+
         # Call LLM planner
         logger.info(f"🤖 Planning next step for session {request.session_id}")
         try:
             plan_result = planner.plan_next_step(
                 user_message=request.message,
                 known_fields=session.known.model_dump(),
-                conversation_history=conversation_history
+                conversation_history=conversation_history,
+                patterns=patterns
             )
         except Exception as e:
             logger.error(f"LLM planner error: {e}")
@@ -237,11 +247,17 @@ async def _handle_ask_mode(
     plan_result: Dict[str, Any],
     db
 ) -> AskResponse:
-    """Handle ask mode: save state and return question."""
+    """Handle ask mode: save state and return question with options/suggestions."""
 
     question = plan_result.get("question", "Розкажи більше про твій продукт")
     updates = plan_result.get("updates", {})
     missing_fields = plan_result.get("missing_fields", [])
+
+    # Extract new fields from LLM response
+    options = plan_result.get("options", [])
+    suggestions = plan_result.get("suggestions", [])
+    examples = plan_result.get("examples", [])
+    policy_hints = plan_result.get("policy_hints", [])
 
     # Update known fields
     known_dict = session.known.model_dump()
@@ -269,16 +285,29 @@ async def _handle_ask_mode(
     )
     await db.chat_messages.insert_one(assistant_msg.model_dump())
 
-    logger.info(f"📝 Ask mode: completeness={completeness:.0%}, missing={len(missing_fields)}")
+    logger.info(f"📝 Ask mode: completeness={completeness:.0%}, missing={len(missing_fields)}, options={len(options)}, suggestions={len(suggestions)}")
+
+    # Build enhanced state
+    state = {
+        "known": known_dict,
+        "completeness": completeness
+    }
+
+    # Add optional fields if present
+    if options:
+        state["options"] = options
+    if suggestions:
+        state["suggestions"] = suggestions
+    if examples:
+        state["examples"] = examples
+    if policy_hints:
+        state["policy_hints"] = policy_hints
 
     return AskResponse(
         type="ask",
         reply=question,
         missing_fields=missing_fields,
-        state={
-            "known": known_dict,
-            "completeness": completeness
-        }
+        state=state
     )
 
 
@@ -288,14 +317,16 @@ async def _handle_final_mode(
     plan_result: Dict[str, Any],
     db
 ) -> FinalResponse:
-    """Handle final mode: save brief and return prompt."""
+    """Handle final mode: save brief and return prompt with creative_spec."""
 
     brief = plan_result.get("brief", {})
+    creative_spec = plan_result.get("creative_spec")
     final_prompt = plan_result.get("final_prompt")
 
-    # Fallback prompt if LLM didn't provide one
-    if not final_prompt:
-        final_prompt = planner.generate_fallback_prompt(brief)
+    # Generate enhanced prompt if not provided or if we have creative_spec
+    if not final_prompt or creative_spec:
+        from src.services.chat_planner_helpers import generate_enhanced_final_prompt
+        final_prompt = generate_enhanced_final_prompt(brief, creative_spec)
 
     # Update session to FINAL
     await db.chat_sessions.update_one(
@@ -310,22 +341,29 @@ async def _handle_final_mode(
     )
 
     # Save assistant response
+    summary_text = "✅ Чудово! Я зібрав всю необхідну інформацію."
+    if creative_spec:
+        summary_text += " Створив детальний креативний blueprint з hook, структурою та стилем."
+
     assistant_msg = ChatMessage(
         session_id=session_id,
         role="assistant",
-        text=f"✅ Чудово! Я зібрав всю необхідну інформацію. Ось твій бриф:\n\n{final_prompt}"
+        text=summary_text
     )
     await db.chat_messages.insert_one(assistant_msg.model_dump())
 
-    logger.info(f"✅ Final mode: brief complete for session {session_id}")
+    logger.info(f"✅ Final mode: brief complete for session {session_id}, creative_spec={bool(creative_spec)}")
+
+    # Build response state
+    state = {"completeness": 1.0}
+    if creative_spec:
+        state["creative_spec"] = creative_spec
 
     return FinalResponse(
         type="final",
         final_prompt=final_prompt,
         brief=brief,
-        state={
-            "completeness": 1.0
-        }
+        state=state
     )
 
 
@@ -380,6 +418,44 @@ async def get_session_state(session_id: str):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get session: {str(e)}"
+        )
+
+
+@router.get("/sessions", summary="List all chat sessions")
+async def list_sessions(
+    skip: int = 0,
+    limit: int = 20
+):
+    """
+    List all chat sessions with pagination.
+    """
+    try:
+        db = MongoDB.get_db()
+
+        # Get total count
+        total = await db.chat_sessions.count_documents({})
+
+        # Get sessions sorted by updated_at desc
+        cursor = db.chat_sessions.find({}).sort("updated_at", -1).skip(skip).limit(limit)
+        sessions = await cursor.to_list(length=limit)
+
+        # Remove MongoDB _id
+        for session in sessions:
+            session.pop("_id", None)
+
+        return {
+            "success": True,
+            "total": total,
+            "skip": skip,
+            "limit": limit,
+            "sessions": sessions
+        }
+
+    except Exception as e:
+        logger.error(f"Error listing sessions: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list sessions: {str(e)}"
         )
 
 

@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat MVP Pro - Enhanced Test UI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* Sidebar with sessions list */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .btn-new-chat {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .btn-new-chat:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .sessions-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .session-item {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .session-item:hover {
+            background: #f5f5f5;
+        }
+
+        .session-item.active {
+            background: #ede7f6;
+            border-color: #667eea;
+        }
+
+        .session-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .session-meta {
+            font-size: 12px;
+            color: #999;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .session-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .session-status.active {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .session-status.final {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        /* Main chat container */
+        .container {
+            flex: 1;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            max-width: 900px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .session-info {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.3);
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: white;
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #f5f5f5;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .message-content {
+            max-width: 70%;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .message.user .message-time {
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Options (quick-click buttons) */
+        .options-container {
+            margin: 10px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .option-chip {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 2px solid #1976d2;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-chip:hover {
+            background: #1976d2;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Suggestions */
+        .suggestions-container {
+            margin: 10px 0;
+        }
+
+        .suggestion-item {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 10px;
+            margin: 6px 0;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggestion-item:hover {
+            background: #ffe0b2;
+            transform: translateX(4px);
+        }
+
+        .suggestion-badge {
+            display: inline-block;
+            background: #ff9800;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .suggestion-badge.patterns {
+            background: #4caf50;
+        }
+
+        /* Policy hints */
+        .policy-hints {
+            margin: 10px 0;
+        }
+
+        .policy-hint {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 6px 0;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        /* Examples */
+        .examples-container {
+            margin: 10px 0;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .example-item {
+            padding: 6px 0;
+            font-style: italic;
+        }
+
+        /* Final brief */
+        .final-brief {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+
+        .final-brief h3 {
+            color: #856404;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brief-fields {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .brief-field {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .brief-field strong {
+            min-width: 140px;
+            color: #667eea;
+        }
+
+        /* Creative spec */
+        .creative-spec {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .creative-spec h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+
+        .spec-section {
+            background: white;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+
+        .spec-section h4 {
+            color: #4caf50;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .spec-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .spec-list li {
+            padding: 4px 0;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .spec-list li::before {
+            content: "→ ";
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .final-prompt {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .btn-submit {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-field:focus {
+            border-color: #667eea;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            max-width: fit-content;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+
+        .completeness-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .error-message {
+            background: #fee;
+            border-left: 4px solid #f44;
+            padding: 12px;
+            border-radius: 8px;
+            color: #c33;
+            margin: 10px 0;
+        }
+
+        .success-message {
+            background: #efe;
+            border-left: 4px solid #4f4;
+            padding: 12px;
+            border-radius: 8px;
+            color: #393;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 1024px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar with sessions -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>💬 Історія чатів</h2>
+            <button class="btn-new-chat" onclick="createNewSession()">+ Новий чат</button>
+        </div>
+        <div class="sessions-list" id="sessionsList">
+            <div style="padding: 20px; text-align: center; color: #999;">
+                Завантаження...
+            </div>
+        </div>
+    </div>
+
+    <!-- Main chat container -->
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>💬 Chat MVP Pro</h1>
+                <div class="session-info" id="sessionInfo">Створи новий чат</div>
+            </div>
+            <div class="completeness-badge" id="completeness">0%</div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="messages" id="messages">
+            <div style="padding: 40px; text-align: center; color: #999;">
+                <div style="font-size: 48px; margin-bottom: 20px;">👋</div>
+                <div style="font-size: 18px; margin-bottom: 10px;">Вітаю в Chat MVP Pro!</div>
+                <div style="font-size: 14px;">Створи новий чат або вибери з історії зліва</div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input
+                type="text"
+                class="input-field"
+                id="messageInput"
+                placeholder="Напиши своє повідомлення..."
+                autocomplete="off"
+                disabled
+            >
+            <button class="btn-send" id="sendBtn" disabled>Надіслати</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = 'http://localhost:8000/api/v1/chat-mvp';
+
+        // State
+        let currentSessionId = null;
+        let currentBrief = null;
+        let currentPrompt = null;
+        let isTyping = false;
+        let allSessions = [];
+
+        // DOM elements
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const sessionInfo = document.getElementById('sessionInfo');
+        const completenessEl = document.getElementById('completeness');
+        const progressFill = document.getElementById('progressFill');
+        const sessionsList = document.getElementById('sessionsList');
+
+        // Initialize
+        async function init() {
+            await loadSessions();
+        }
+
+        // Load all sessions
+        async function loadSessions() {
+            try {
+                const response = await fetch(`${API_BASE}/sessions`);
+                if (!response.ok) throw new Error('Failed to load sessions');
+
+                const data = await response.json();
+                allSessions = data.sessions || [];
+
+                renderSessionsList();
+            } catch (error) {
+                console.error('Load sessions error:', error);
+                sessionsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #f44;">Помилка завантаження</div>';
+            }
+        }
+
+        // Render sessions list
+        function renderSessionsList() {
+            if (allSessions.length === 0) {
+                sessionsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Немає чатів</div>';
+                return;
+            }
+
+            sessionsList.innerHTML = allSessions.map(session => {
+                const date = new Date(session.updated_at);
+                const timeStr = date.toLocaleString('uk-UA', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const product = session.known?.product_offer || 'Новий чат';
+                const isActive = session.session_id === currentSessionId;
+
+                return `
+                    <div class="session-item ${isActive ? 'active' : ''}" onclick="loadSession('${session.session_id}')">
+                        <div class="session-title">${product}</div>
+                        <div class="session-meta">
+                            <span>${timeStr}</span>
+                            <span class="session-status ${session.status}">${session.status}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Create new session
+        async function createNewSession() {
+            try {
+                const response = await fetch(`${API_BASE}/session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                if (!response.ok) throw new Error('Failed to create session');
+
+                const data = await response.json();
+                currentSessionId = data.session_id;
+                sessionInfo.textContent = `Session: ${currentSessionId.substring(0, 8)}...`;
+
+                // Enable input
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+
+                // Load session
+                await loadSessionMessages();
+                await loadSessions(); // Refresh list
+            } catch (error) {
+                console.error('Create session error:', error);
+                showError('Не вдалося створити сесію');
+            }
+        }
+
+        // Load session by ID
+        async function loadSession(sessionId) {
+            currentSessionId = sessionId;
+            sessionInfo.textContent = `Session: ${sessionId.substring(0, 8)}...`;
+
+            // Enable input
+            messageInput.disabled = false;
+            sendBtn.disabled = false;
+
+            await loadSessionMessages();
+            renderSessionsList(); // Update active state
+        }
+
+        // Load session messages
+        async function loadSessionMessages() {
+            try {
+                const response = await fetch(`${API_BASE}/session/${currentSessionId}`);
+                if (!response.ok) throw new Error('Failed to load session');
+
+                const data = await response.json();
+
+                // Clear and render messages
+                messagesContainer.innerHTML = '';
+                data.messages.forEach(msg => {
+                    addMessage(msg.role, msg.text, new Date(msg.ts), false);
+                });
+
+                // Update completeness
+                updateCompleteness(data.state.completeness);
+            } catch (error) {
+                console.error('Load session error:', error);
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || !currentSessionId || isTyping) return;
+
+            // Add user message
+            addMessage('user', message);
+            messageInput.value = '';
+
+            // Show typing
+            showTyping(true);
+
+            try {
+                const response = await fetch(`${API_BASE}/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: currentSessionId,
+                        message: message
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Request failed');
+                }
+
+                const data = await response.json();
+                showTyping(false);
+
+                if (data.type === 'ask') {
+                    handleAskResponse(data);
+                } else if (data.type === 'final') {
+                    handleFinalResponse(data);
+                }
+
+                // Refresh sessions list
+                await loadSessions();
+
+            } catch (error) {
+                showTyping(false);
+                console.error('Send message error:', error);
+                showError(error.message);
+            }
+        }
+
+        // Handle ask response
+        function handleAskResponse(data) {
+            // Add question
+            addMessage('assistant', data.reply);
+
+            // Add options if present
+            if (data.state.options && data.state.options.length > 0) {
+                addOptions(data.state.options);
+            }
+
+            // Add suggestions if present
+            if (data.state.suggestions && data.state.suggestions.length > 0) {
+                addSuggestions(data.state.suggestions);
+            }
+
+            // Add examples if present
+            if (data.state.examples && data.state.examples.length > 0) {
+                addExamples(data.state.examples);
+            }
+
+            // Add policy hints if present
+            if (data.state.policy_hints && data.state.policy_hints.length > 0) {
+                addPolicyHints(data.state.policy_hints);
+            }
+
+            updateCompleteness(data.state.completeness);
+        }
+
+        // Handle final response
+        function handleFinalResponse(data) {
+            addMessage('assistant', '✅ Чудово! Я зібрав всю необхідну інформацію.');
+            addFinalBrief(data.brief, data.final_prompt, data.state.creative_spec);
+            updateCompleteness(1.0);
+            currentBrief = data.brief;
+            currentPrompt = data.final_prompt;
+        }
+
+        // Add message to chat
+        function addMessage(role, text, timestamp = new Date(), scroll = true) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = role === 'user' ? '👤' : '🤖';
+
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            content.textContent = text;
+
+            const time = document.createElement('div');
+            time.className = 'message-time';
+            time.textContent = timestamp.toLocaleTimeString('uk-UA', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            content.appendChild(time);
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+
+            messagesContainer.appendChild(messageDiv);
+            if (scroll) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Add options (quick-click buttons)
+        function addOptions(options) {
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'options-container';
+
+            options.forEach(option => {
+                const chip = document.createElement('button');
+                chip.className = 'option-chip';
+                chip.textContent = option;
+                chip.onclick = () => {
+                    messageInput.value = option;
+                    sendMessage();
+                };
+                optionsDiv.appendChild(chip);
+            });
+
+            messagesContainer.appendChild(optionsDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Add suggestions
+        function addSuggestions(suggestions) {
+            const container = document.createElement('div');
+            container.className = 'suggestions-container';
+
+            const title = document.createElement('div');
+            title.textContent = '💡 Пропозиції:';
+            title.style.fontWeight = 'bold';
+            title.style.marginBottom = '8px';
+            title.style.fontSize = '13px';
+            container.appendChild(title);
+
+            suggestions.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+
+                const text = typeof s === 'string' ? s : s.text;
+                const source = typeof s === 'object' ? s.source : 'default';
+
+                item.innerHTML = `
+                    ${text}
+                    <span class="suggestion-badge ${source}">${source === 'patterns' ? '🎯 З аналізу' : '💡 Best practice'}</span>
+                `;
+
+                item.onclick = () => {
+                    messageInput.value = text;
+                    messageInput.focus();
+                };
+
+                container.appendChild(item);
+            });
+
+            messagesContainer.appendChild(container);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Add examples
+        function addExamples(examples) {
+            const container = document.createElement('div');
+            container.className = 'examples-container';
+            container.innerHTML = '<strong>📝 Приклади:</strong>';
+
+            examples.forEach(ex => {
+                const item = document.createElement('div');
+                item.className = 'example-item';
+                item.textContent = `• ${ex}`;
+                container.appendChild(item);
+            });
+
+            messagesContainer.appendChild(container);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Add policy hints
+        function addPolicyHints(hints) {
+            const container = document.createElement('div');
+            container.className = 'policy-hints';
+
+            hints.forEach(hint => {
+                const item = document.createElement('div');
+                item.className = 'policy-hint';
+                item.textContent = typeof hint === 'string' ? hint : hint.text;
+                container.appendChild(item);
+            });
+
+            messagesContainer.appendChild(container);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Add final brief
+        function addFinalBrief(brief, prompt, creativeSpec) {
+            const briefDiv = document.createElement('div');
+            briefDiv.className = 'final-brief';
+
+            let html = `<h3>📋 Готовий бриф</h3>`;
+
+            // Basic brief fields
+            html += `<div class="brief-fields">`;
+            html += `<div class="brief-field"><strong>Продукт:</strong> ${brief.product_offer || 'N/A'}</div>`;
+            html += `<div class="brief-field"><strong>Аудиторія:</strong> ${brief.audience || 'N/A'}</div>`;
+            html += `<div class="brief-field"><strong>Мета:</strong> ${brief.objective || 'N/A'}</div>`;
+            html += `<div class="brief-field"><strong>Платформа:</strong> ${brief.platform || 'N/A'}</div>`;
+            html += `<div class="brief-field"><strong>Формат:</strong> ${brief.format || 'N/A'}</div>`;
+            html += `<div class="brief-field"><strong>Тривалість:</strong> ${brief.duration_s}s</div>`;
+            html += `<div class="brief-field"><strong>CTA:</strong> ${brief.cta || 'N/A'}</div>`;
+            html += `</div>`;
+
+            // Creative spec if present
+            if (creativeSpec) {
+                html += `<div class="creative-spec">`;
+                html += `<h3>🎬 Креативна специфікація</h3>`;
+
+                if (creativeSpec.hook) {
+                    html += `<div class="spec-section">`;
+                    html += `<h4>Hook</h4>`;
+                    html += `<div>Тип: ${creativeSpec.hook.type || 'N/A'}</div>`;
+                    html += `<div>Опис: ${creativeSpec.hook.description || 'N/A'}</div>`;
+                    html += `</div>`;
+                }
+
+                if (creativeSpec.structure) {
+                    html += `<div class="spec-section">`;
+                    html += `<h4>Structure</h4>`;
+                    html += `<div>${creativeSpec.structure}</div>`;
+                    html += `</div>`;
+                }
+
+                if (creativeSpec.style) {
+                    html += `<div class="spec-section">`;
+                    html += `<h4>Style</h4>`;
+                    html += `<div>Production: ${creativeSpec.style.production || 'N/A'}</div>`;
+                    html += `<div>Pacing: ${creativeSpec.style.pacing || 'N/A'}</div>`;
+                    html += `</div>`;
+                }
+
+                if (creativeSpec.voiceover) {
+                    html += `<div class="spec-section">`;
+                    html += `<h4>Voiceover</h4>`;
+                    html += `<ul class="spec-list">`;
+                    creativeSpec.voiceover.forEach(line => {
+                        html += `<li>${line}</li>`;
+                    });
+                    html += `</ul></div>`;
+                }
+
+                if (creativeSpec.on_screen_text) {
+                    html += `<div class="spec-section">`;
+                    html += `<h4>On-screen Text</h4>`;
+                    html += `<ul class="spec-list">`;
+                    creativeSpec.on_screen_text.forEach(text => {
+                        html += `<li>${text}</li>`;
+                    });
+                    html += `</ul></div>`;
+                }
+
+                if (creativeSpec.cta_spec) {
+                    html += `<div class="spec-section">`;
+                    html += `<h4>CTA Spec</h4>`;
+                    html += `<div>Text: ${creativeSpec.cta_spec.text}</div>`;
+                    html += `<div>Timestamp: ${creativeSpec.cta_spec.timestamp}s</div>`;
+                    html += `<div>Urgency: ${creativeSpec.cta_spec.urgency}</div>`;
+                    html += `</div>`;
+                }
+
+                html += `</div>`;
+            }
+
+            // Final prompt
+            html += `<h3>🎥 Промпт для генерації:</h3>`;
+            html += `<div class="final-prompt">${prompt}</div>`;
+
+            html += `<button class="btn-submit" onclick="submitBrief()">🚀 Відправити на генерацію</button>`;
+
+            briefDiv.innerHTML = html;
+            messagesContainer.appendChild(briefDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Submit brief
+        async function submitBrief() {
+            if (!currentBrief || !currentPrompt) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: currentSessionId,
+                        final_prompt: currentPrompt,
+                        brief: currentBrief
+                    })
+                });
+
+                if (!response.ok) throw new Error('Submit failed');
+
+                const data = await response.json();
+
+                const successDiv = document.createElement('div');
+                successDiv.className = 'success-message';
+                successDiv.textContent = `✅ Бриф відправлено! Job ID: ${data.job_id}`;
+                messagesContainer.appendChild(successDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            } catch (error) {
+                console.error('Submit error:', error);
+                showError('Не вдалося відправити бриф');
+            }
+        }
+
+        // Show typing indicator
+        function showTyping(show) {
+            isTyping = show;
+            sendBtn.disabled = show;
+
+            let typingIndicator = document.getElementById('typingIndicator');
+
+            if (show && !typingIndicator) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message assistant';
+                messageDiv.id = 'typingIndicator';
+
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                avatar.textContent = '🤖';
+
+                const indicator = document.createElement('div');
+                indicator.className = 'typing-indicator active';
+                indicator.innerHTML = `
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                `;
+
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(indicator);
+                messagesContainer.appendChild(messageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } else if (!show && typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // Update completeness
+        function updateCompleteness(value) {
+            const percent = Math.round(value * 100);
+            completenessEl.textContent = `${percent}%`;
+            progressFill.style.width = `${percent}%`;
+        }
+
+        // Show error
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = `❌ Помилка: ${message}`;
+            messagesContainer.appendChild(errorDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>

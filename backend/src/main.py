@@ -58,7 +58,8 @@ async def root():
         "message": "Facebook Ads Library Parser API",
         "version": "1.0.0",
         "docs": "/docs",
-        "chat_test_ui": "/static/chat_test.html"
+        "chat_test_ui": "/static/chat_test.html",
+        "chat_pro_ui": "/static/chat_pro.html"
     }
 
 

@@ -8,11 +8,23 @@ import logging
 import json
 from typing import Dict, Any, List, Optional
 import google.generativeai as genai
+from src.services.patterns_extractor import (
+    extract_patterns_summary,
+    format_patterns_for_prompt,
+    get_default_patterns
+)
+from src.services.chat_planner_helpers import (
+    add_policy_hints_to_response,
+    generate_enhanced_final_prompt
+)
 
 logger = logging.getLogger(__name__)
 
-# Required fields for brief completion
+# Required fields for brief completion (extended)
 REQUIRED_FIELDS = ["product_offer", "audience", "objective", "platform", "duration_s", "cta"]
+
+# Creative fields (optional but recommended)
+CREATIVE_FIELDS = ["hook", "structure", "style"]
 
 
 class ChatPlanner:
@@ -38,7 +50,8 @@ class ChatPlanner:
         self,
         user_message: str,
         known_fields: Dict[str, Any],
-        conversation_history: List[Dict[str, str]]
+        conversation_history: List[Dict[str, str]],
+        patterns: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
         Analyze user message and decide next step.
@@ -47,16 +60,17 @@ class ChatPlanner:
             user_message: Latest message from user
             known_fields: Currently known brief fields
             conversation_history: Previous messages [{role, text}]
+            patterns: Optional patterns from Step-1 analysis
 
         Returns:
             Dict with either:
-            - Ask mode: {"need_more_info": true, "question": "...", "missing_fields": [...], "updates": {...}}
-            - Final mode: {"need_more_info": false, "final_prompt": "...", "brief": {...}}
+            - Ask mode: {"need_more_info": true, "question": "...", "options": [...], "suggestions": [...], "examples": [...], ...}
+            - Final mode: {"need_more_info": false, "final_prompt": "...", "brief": {...}, "creative_spec": {...}}
         """
         try:
-            prompt = self._build_prompt(user_message, known_fields, conversation_history)
+            prompt = self._build_prompt(user_message, known_fields, conversation_history, patterns)
 
-            logger.info(f"📤 Sending request to Gemini (history: {len(conversation_history)} messages)")
+            logger.info(f"📤 Sending request to Gemini (history: {len(conversation_history)} messages, patterns: {bool(patterns)})")
             response = self.model.generate_content(prompt)
 
             if not response.text:
@@ -64,6 +78,10 @@ class ChatPlanner:
 
             result = json.loads(response.text)
             logger.info(f"📥 Received response: need_more_info={result.get('need_more_info', 'unknown')}")
+
+            # Add policy hints if detected risks
+            if result.get("need_more_info"):
+                result = add_policy_hints_to_response(result, user_message, known_fields)
 
             return result
 
@@ -86,9 +104,10 @@ class ChatPlanner:
         self,
         user_message: str,
         known_fields: Dict[str, Any],
-        conversation_history: List[Dict[str, str]]
+        conversation_history: List[Dict[str, str]],
+        patterns: Optional[Dict[str, Any]] = None
     ) -> str:
-        """Build system prompt for Gemini."""
+        """Build system prompt for Gemini with patterns context."""
 
         # Build conversation context
         history_text = ""
@@ -102,11 +121,23 @@ class ChatPlanner:
 
         # Missing fields
         missing = [f for f in REQUIRED_FIELDS if not known_fields.get(f)]
-        missing_text = ", ".join(missing) if missing else "none"
+        missing_creative = [f for f in CREATIVE_FIELDS if not known_fields.get(f)]
+        missing_text = ", ".join(missing + missing_creative) if (missing or missing_creative) else "none"
 
-        prompt = f"""You are a creative producer helping to collect information for a performance video brief.
+        # Patterns context
+        patterns_text = ""
+        if patterns:
+            patterns_text = "\n\nCOMPETITOR PATTERNS (from Step-1 analysis):\n" + format_patterns_for_prompt(patterns)
+        else:
+            # Use defaults
+            default_patterns = get_default_patterns()
+            patterns_text = "\n\nDEFAULT BEST PRACTICES:\n" + format_patterns_for_prompt(default_patterns)
 
-Your goal is to ask concise, friendly questions to gather ONLY these required fields:
+        prompt = f"""You are an expert creative producer helping to collect information for a performance video brief.
+
+Your goal is to ask concise, friendly questions to gather these fields:
+
+REQUIRED:
 - product_offer (string): What product/service/offer to promote
 - audience (string): Target audience description
 - objective (enum): install | lead | purchase | signup | traffic
@@ -114,12 +145,22 @@ Your goal is to ask concise, friendly questions to gather ONLY these required fi
 - duration_s (integer): 6 | 9 | 15 | 30 seconds
 - cta (string): Call-to-action text
 
+CREATIVE (optional but recommended):
+- hook (string): Hook concept/type (first 3s)
+- structure (string): Narrative structure (problem-solution, before-after, testimonial, etc.)
+- style (string): Visual style (UGC, screencast, testimonial, etc.)
+
 RULES:
 1. Ask ONE question at a time, in Ukrainian language
-2. Be concise and friendly
-3. Extract info from user's answer and update known fields
-4. When ALL required fields are filled → switch to final mode
-5. Infer reasonable defaults when possible (e.g., if user says "Instagram Reels" → platform=instagram, format=reels)
+2. Be concise and friendly (max 2 sentences)
+3. Provide 3-4 quick-click OPTIONS for common fields (platform, objective, duration, structure, style)
+4. Provide SUGGESTIONS from competitor patterns when relevant (use patterns_text below)
+5. Give 1-2 EXAMPLES of good answers for open fields (audience, hook, cta)
+6. Extract info from user's answer and update known fields
+7. When ALL REQUIRED fields filled → collect creative fields (hook/structure/style) if missing
+8. When ready → switch to final mode with creative_spec
+9. Infer reasonable defaults (e.g., "Instagram Reels" → platform=instagram, format=reels, duration_s=15)
+{patterns_text}
 
 CURRENT STATE:
 Known fields: {known_text}
@@ -136,15 +177,21 @@ OUTPUT JSON FORMAT:
 If need more info (missing fields remain):
 {{
   "need_more_info": true,
-  "question": "Concise question in Ukrainian",
+  "question": "Concise question in Ukrainian (max 2 sentences)",
   "missing_fields": ["field1", "field2"],
-  "updates": {{"field_name": "extracted_value"}}
+  "updates": {{"field_name": "extracted_value"}},
+  "options": ["Option 1", "Option 2", "Option 3"],  // Optional: quick-click choices
+  "suggestions": [  // Optional: from patterns or defaults
+    {{"text": "Suggestion 1", "source": "patterns|default"}},
+    {{"text": "Suggestion 2", "source": "patterns|default"}}
+  ],
+  "examples": ["Example 1", "Example 2"]  // Optional: example answers
 }}
 
-If ready (all required fields present):
+If ready (all required fields present + creative fields collected):
 {{
   "need_more_info": false,
-  "final_prompt": "Detailed prompt for video generation in Ukrainian",
+  "final_prompt": "Detailed video generation prompt in Ukrainian",
   "brief": {{
     "product_offer": "...",
     "audience": "...",
@@ -154,6 +201,14 @@ If ready (all required fields present):
     "aspect_ratio": "9:16",
     "duration_s": 15,
     "cta": "..."
+  }},
+  "creative_spec": {{  // Optional but recommended
+    "hook": {{"type": "problem-solution", "description": "..."}},
+    "structure": "hook-body-cta",
+    "style": {{"production": "UGC", "pacing": "dynamic"}},
+    "voiceover": ["Line 1 (0-3s)", "Line 2 (3-8s)", "Line 3 (8-15s)"],
+    "on_screen_text": ["Hook text", "Value prop", "CTA"],
+    "cta_spec": {{"text": "...", "timestamp": 12, "urgency": "high"}}
   }}
 }}
 
