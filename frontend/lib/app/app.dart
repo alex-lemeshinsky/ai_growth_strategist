@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../features/home/presentation/home_screen.dart';
+import '../presentation/screens/home/home_screen.dart';
 import 'theme.dart';
 
 class AIGrowthStrategistApp extends StatelessWidget {

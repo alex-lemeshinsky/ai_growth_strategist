@@ -6,7 +6,8 @@ class AppTheme {
   static ThemeData get light {
     const seed = Color(0xFF6C5CE7);
     return ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light),
+      colorScheme:
+          ColorScheme.fromSeed(seedColor: seed, brightness: Brightness.light),
       useMaterial3: true,
       scaffoldBackgroundColor: const Color(0xFFF5F7FB),
       textTheme: Typography.englishLike2021.apply(
@@ -50,7 +51,7 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: const Color(0xFFE8EDFF),
-        selectedColor: seed.withOpacity(0.12),
+        selectedColor: seed.withValues(alpha: 0.12),
         labelStyle: const TextStyle(fontWeight: FontWeight.w500),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
