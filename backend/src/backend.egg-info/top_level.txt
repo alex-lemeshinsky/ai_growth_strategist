@@ -1,0 +1,10 @@
+__init__
+api
+application
+config
+domain
+infrastructure
+main
+main_example
+services
+utils

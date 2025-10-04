@@ -46,28 +46,6 @@ try:
     for item in client.dataset(run["defaultDatasetId"]).iterate_items():
         # Витягуємо дані, використовуючи .get() для безпеки
         print(item)
-        page_name = item.get('pageName')
-        ad_id = item.get('adId')
-
-        # Основні дані креативу
-        creative_body = item.get('body')
-        creative_title = item.get('title')
-        link_url = item.get('link')
-        display_format = item.get('displayFormat')
-
-        # Прямі посилання на медіа
-        image_url = item.get('imageUrl')
-        video_url = item.get('videoUrl')
-
-        print("-" * 40)
-        print(f"👨‍💼 Рекламодавець: {page_name}")
-        print(f"🆔 ID Реклами: {ad_id}")
-        print(f"🎨 Тип креативу: {display_format}")
-        print(f"📝 Заголовок: {creative_title}")
-        print(f"📖 Основний текст: {creative_body}")
-        print(f"🔗 Посилання: {link_url}")
-        print(f"🖼️ Зображення: {image_url}")
-        print(f"🎬 Відео: {video_url}")
 
 except Exception as e:
     print(f"Виникла помилка: {e}")

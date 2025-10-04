@@ -6,11 +6,11 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "python-dotenv>=1.0.0",
-    "aiohttp>=3.9.0",
-    "beautifulsoup4>=4.12.0",
-    "playwright>=1.55.0",
-    "facebook-business>=23.0.2",
     "apify-client>=2.1.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "pydantic>=2.4.0",
+    "aiofiles>=23.2.0",
 ]
 
 [project.optional-dependencies]
