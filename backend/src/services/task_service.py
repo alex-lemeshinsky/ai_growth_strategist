@@ -20,7 +20,7 @@ CACHE_DIR = Path(__file__).parent.parent.parent / ".cache" / "videos"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
-async def parse_ads_task(task_id: str, url: str, max_results: int = 15):
+async def parse_ads_task(task_id: str, url: str, max_results: int = 15, auto_analyze: bool = True):
     """
     Background task: Parse ads from Facebook Ads Library.
     """
@@ -83,6 +83,12 @@ async def parse_ads_task(task_id: str, url: str, max_results: int = 15):
         )
         
         logger.info(f"✅ Task {task_id}: Parsed {len(raw_ads)} ads")
+        
+        # Auto-trigger analysis if enabled
+        if auto_analyze and len(raw_ads) > 0:
+            logger.info(f"🚀 Auto-starting analysis for task {task_id}")
+            import asyncio
+            asyncio.create_task(analyze_creatives_task(task_id))
         
     except Exception as e:
         logger.error(f"❌ Task {task_id} failed: {e}")
@@ -242,6 +248,29 @@ async def analyze_creatives_task(task_id: str):
             logger.warning(f"⚠️ Aggregation failed, but saving individual analyses: {e}")
             aggregation_error = str(e)
         
+        # Generate HTML report
+        html_report = None
+        try:
+            from src.utils.html_report import generate_html_report
+            
+            task_data = {
+                "page_name": task_doc.get("page_name"),
+                "total_ads": task_doc.get("total_ads"),
+            }
+            
+            creatives_data = [a.model_dump() for a in analyses]
+            aggregated_data = aggregated.model_dump() if aggregated else None
+            
+            html_report = generate_html_report(
+                task_data=task_data,
+                creatives=creatives_data,
+                aggregated=aggregated_data,
+                aggregation_error=aggregation_error
+            )
+            logger.info(f"✅ Generated HTML report")
+        except Exception as e:
+            logger.error(f"❌ Failed to generate HTML report: {e}")
+        
         # Update task with results (even if aggregation failed)
         update_data = {
             "status": TaskStatus.COMPLETED,
@@ -254,6 +283,9 @@ async def analyze_creatives_task(task_id: str):
         
         if aggregation_error:
             update_data["aggregation_error"] = aggregation_error
+        
+        if html_report:
+            update_data["html_report"] = html_report
         
         await db.tasks.update_one(
             {"task_id": task_id},

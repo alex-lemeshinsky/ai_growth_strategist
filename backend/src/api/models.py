@@ -72,6 +72,7 @@ class ParseAdsRequest(BaseModel):
     url: str = Field(..., description="Facebook Ads Library URL")
     max_results: int = Field(default=15, ge=1, le=100, description="Maximum number of ads to extract")
     fetch_all_details: bool = Field(default=True, description="Whether to fetch full creative details")
+    auto_analyze: bool = Field(default=True, description="Automatically start video analysis after parsing")
     output_filename: Optional[str] = Field(default=None, description="Custom output filename (without extension)")
 
 

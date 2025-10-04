@@ -82,6 +82,7 @@ class Task(BaseModel):
     creatives_analyzed: List[CreativeAnalysis] = Field(default_factory=list)
     aggregated_analysis: Optional[AggregatedAnalysis] = None
     aggregation_error: Optional[str] = None  # Error during aggregation (task still completed)
+    html_report: Optional[str] = None  # HTML report for frontend display
     
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)

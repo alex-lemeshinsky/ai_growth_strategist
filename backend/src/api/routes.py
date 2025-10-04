@@ -51,7 +51,8 @@ async def parse_ads(request: ParseAdsRequest, background_tasks: BackgroundTasks)
             parse_ads_task(
                 task_id=task_id,
                 url=request.url,
-                max_results=request.max_results
+                max_results=request.max_results,
+                auto_analyze=request.auto_analyze
             )
         )
         
