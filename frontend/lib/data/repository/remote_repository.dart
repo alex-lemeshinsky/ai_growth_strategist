@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/generate_video_request_model.dart';
 import '../models/parse_ads_request_model.dart';
+import '../../domain/entities/task_entity.dart';
 
 final remoteRepositoryProvider = Provider<RemoteRepository>((ref) {
   final client = http.Client();
@@ -14,14 +15,15 @@ final remoteRepositoryProvider = Provider<RemoteRepository>((ref) {
 
 class RemoteRepository {
   RemoteRepository({required http.Client client, Uri? baseUri})
-      : _client = client,
-        _baseUri = baseUri ?? Uri.parse('https://2c41e381b565.ngrok-free.app');
+    : _client = client,
+      _baseUri = baseUri ?? Uri.parse('https://2c41e381b565.ngrok-free.app');
 
   final http.Client _client;
   final Uri _baseUri;
 
   Uri _resolve(String path, [Map<String, dynamic>? query]) {
-    final uri = _baseUri.resolve(path.startsWith('/') ? path.substring(1) : path);
+    final normalized = path.startsWith('/') ? path : '/$path';
+    final uri = _baseUri.resolve(normalized);
     if (query == null || query.isEmpty) {
       return uri;
     }
@@ -69,7 +71,7 @@ class RemoteRepository {
       'https://itsurkan4.app.n8n.cloud/webhook-test/5628f961-d272-4368-88aa-67dff5efa0d9',
     );
     final result = await _postJson(uri, payload.toJson());
-    return result['taskId']?.toString() ?? result['data']?.toString() ?? '';
+    return result['taskId']?.toString() ?? result['task_id']?.toString() ?? '';
   }
 
   Future<Map<String, dynamic>> parseAds(ParseAdsRequestModel payload) =>
@@ -79,10 +81,7 @@ class RemoteRepository {
       _postJson(_resolve('/api/v1/debug-parse'), payload.toJson());
 
   Future<List<dynamic>> listTasks({int skip = 0, int limit = 20, String? status}) async {
-    final query = <String, dynamic>{
-      'skip': skip,
-      'limit': limit,
-    };
+    final query = <String, dynamic>{'skip': skip, 'limit': limit};
     if (status != null && status.isNotEmpty) {
       query['status'] = status;
     }
@@ -100,7 +99,13 @@ class RemoteRepository {
 
   Future<Map<String, dynamic>> getTask(String taskId) async {
     final uri = _resolve('/api/v1/task/$taskId');
-    return _decodeOrThrow(uri, await _client.get(uri));
+    final res = _decodeOrThrow(uri, await _client.get(uri));
+    return res['task'] ?? res;
+  }
+
+  Future<TaskEntity> getTaskEntity(String taskId) async {
+    final json = await getTask(taskId);
+    return TaskEntity.fromJson(json);
   }
 
   Future<Map<String, dynamic>> analyzeCreatives(String taskId) async {
