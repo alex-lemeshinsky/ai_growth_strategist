@@ -306,6 +306,21 @@ def generate_html_report(
             margin-bottom: 5px;
         }}
         
+        .video-container {{
+            margin: 20px 0;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }}
+        
+        .creative-video {{
+            width: 100%;
+            max-height: 400px;
+            display: block;
+            background: #000;
+        }}
+        
         @media (max-width: 768px) {{
             .stats {{
                 grid-template-columns: 1fr;
@@ -313,6 +328,10 @@ def generate_html_report(
             
             .scores {{
                 flex-direction: column;
+            }}
+            
+            .creative-video {{
+                max-height: 300px;
             }}
         }}
     </style>
@@ -504,6 +523,8 @@ def generate_creatives_section(creatives: List[Dict[str, Any]]) -> str:
         page_name = creative.get("page_name", "Unknown")
         summary = creative.get("summary", "Опис недоступний")
         scores = creative.get("scores", {})
+        video_url = creative.get("video_url")
+        cached_video_path = creative.get("cached_video_path")
         
         html += f"""
                     <div class="creative-card">
@@ -513,6 +534,29 @@ def generate_creatives_section(creatives: List[Dict[str, Any]]) -> str:
                                 <small>{page_name}</small>
                             </div>
                         </div>
+"""
+        
+        # Add video player if video is available
+        if cached_video_path or video_url:
+            video_hash = None
+            video_src = video_url
+            
+            # If cached, use streaming endpoint
+            if cached_video_path:
+                from pathlib import Path
+                video_hash = Path(cached_video_path).stem
+                video_src = f"/api/v1/video/stream/{video_hash}"
+            
+            html += f"""
+                        <div class="video-container">
+                            <video controls preload="metadata" class="creative-video">
+                                <source src="{video_src}" type="video/mp4">
+                                Ваш браузер не підтримує video.
+                            </video>
+                        </div>
+"""
+        
+        html += f"""
                         <div class="summary">{summary}</div>
 """
         
