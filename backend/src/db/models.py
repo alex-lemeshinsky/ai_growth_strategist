@@ -16,6 +16,13 @@ class TaskStatus(str, Enum):
     FAILED = "FAILED"
 
 
+class PolicyCheckStatus(str, Enum):
+    PENDING = "PENDING"
+    CHECKING = "CHECKING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
 class CreativeAnalysis(BaseModel):
     """Detailed analysis of a single creative."""
     creative_id: str
@@ -64,6 +71,30 @@ class AggregatedAnalysis(BaseModel):
         if not isinstance(v, list):
             return []
         return v
+
+
+class PolicyTask(BaseModel):
+    """Task for video policy compliance checking."""
+    task_id: str
+    video_url: Optional[str] = None
+    video_path: Optional[str] = None
+    platform: str = "facebook"
+    status: PolicyCheckStatus = PolicyCheckStatus.PENDING
+    
+    # Results
+    policy_result: Optional[Dict[str, Any]] = None
+    html_report: Optional[str] = None
+    will_pass_moderation: Optional[bool] = None
+    risk_level: Optional[str] = None
+    violations_count: Optional[int] = None
+    
+    # Metadata
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    error: Optional[str] = None
+    
+    class Config:
+        use_enum_values = True
 
 
 class Task(BaseModel):

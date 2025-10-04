@@ -23,10 +23,16 @@ class MongoDB:
         cls.client = AsyncIOMotorClient(mongo_url)
         cls.db = cls.client[db_name]
         
-        # Create indexes
+        # Create indexes for tasks
         await cls.db.tasks.create_index([("task_id", ASCENDING)], unique=True)
         await cls.db.tasks.create_index([("created_at", DESCENDING)])
         await cls.db.tasks.create_index([("status", ASCENDING)])
+        
+        # Create indexes for policy_tasks
+        await cls.db.policy_tasks.create_index([("task_id", ASCENDING)], unique=True)
+        await cls.db.policy_tasks.create_index([("created_at", DESCENDING)])
+        await cls.db.policy_tasks.create_index([("status", ASCENDING)])
+        await cls.db.policy_tasks.create_index([("platform", ASCENDING)])
         
         logger.info(f"✅ Connected to MongoDB: {db_name}")
     
