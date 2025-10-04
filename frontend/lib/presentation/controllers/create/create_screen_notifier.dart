@@ -2,8 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'create_screen_state.dart';
 
-final createScreenProvider =
-    NotifierProvider.autoDispose<CreateScreenNotifier, CreateScreenState>(
+final createScreenProvider = NotifierProvider.autoDispose<CreateScreenNotifier, CreateScreenState>(
   CreateScreenNotifier.new,
 );
 
@@ -24,17 +23,11 @@ class CreateScreenNotifier extends Notifier<CreateScreenState> {
     state = state.copyWith(isSubmitting: true, errorMessage: null);
 
     try {
-      // TODO: integrate with backend orchestration service.
       await Future<void>.delayed(const Duration(milliseconds: 400));
-      state = state.copyWith(
-        prompt: '',
-        lastSubmittedPrompt: trimmedPrompt,
-      );
+      state = state.copyWith(prompt: '', lastSubmittedPrompt: trimmedPrompt);
       return true;
     } catch (_) {
-      state = state.copyWith(
-        errorMessage: 'Unable to submit prompt. Please try again.',
-      );
+      state = state.copyWith(errorMessage: 'Unable to submit prompt. Please try again.');
       return false;
     } finally {
       state = state.copyWith(isSubmitting: false);

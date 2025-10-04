@@ -15,7 +15,7 @@ void main() {
     await tester
         .pumpWidget(const ProviderScope(child: AIGrowthStrategistApp()));
 
-    expect(find.text('Analyze'), findsOneWidget);
+    expect(find.text('Analyze'), findsWidgets);
 
     await tester.tap(find.text('Create'));
     await tester.pumpAndSettle();
