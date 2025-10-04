@@ -46,6 +46,14 @@ class CreateScreenNotifier extends Notifier<CreateScreenState> {
     try {
       final request = GenerateVideoRequestModel(input: trimmedPrompt, images: const []);
       final taskId = await _remoteRepository.generateVideo(request);
+      if (taskId.isEmpty) {
+        state = state.copyWith(
+          isGenerating: false,
+          errorMessage: 'Generation request accepted but no task id was returned.',
+        );
+        return false;
+      }
+
       state = state.copyWith(
         prompt: '',
         lastSubmittedPrompt: trimmedPrompt,
