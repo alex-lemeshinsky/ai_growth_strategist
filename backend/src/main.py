@@ -2,11 +2,13 @@ import os
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from src.api.routes import router
 from src.api.policy_routes_v2 import router as policy_router
 from src.api.video_routes import router as video_router
 from src.api.report_routes import router as report_router
+from src.api.chat_routes import router as chat_router
 from src.db import MongoDB
 
 # Load environment variables
@@ -43,6 +45,10 @@ app.include_router(router, prefix="/api/v1", tags=["ads"])
 app.include_router(policy_router, prefix="/api/v1/policy", tags=["policy"])
 app.include_router(video_router, prefix="/api/v1/video", tags=["video"])
 app.include_router(report_router, prefix="/report", tags=["reports"])
+app.include_router(chat_router, prefix="/api/v1/chat-mvp", tags=["chat"])
+
+# Mount static files for chat test UI
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.get("/")
@@ -51,7 +57,8 @@ async def root():
     return {
         "message": "Facebook Ads Library Parser API",
         "version": "1.0.0",
-        "docs": "/docs"
+        "docs": "/docs",
+        "chat_test_ui": "/static/chat_test.html"
     }
 
 
@@ -71,6 +78,9 @@ async def startup_event():
     # Check for required environment variables
     if not os.environ.get('APIFY_API_KEY'):
         logger.warning("APIFY_API_KEY not set in environment variables")
+
+    if not os.environ.get('GOOGLE_API_KEY'):
+        logger.warning("GOOGLE_API_KEY not set - Chat MVP will not work")
 
 
 @app.on_event("shutdown")

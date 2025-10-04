@@ -102,23 +102,98 @@ class Task(BaseModel):
     task_id: str
     url: str
     status: TaskStatus = TaskStatus.PENDING
-    
+
     # Results
     page_name: Optional[str] = None
     page_id: Optional[str] = None
     total_ads: Optional[int] = None
     creatives_file: Optional[str] = None
-    
+
     # Analysis results
     creatives_analyzed: List[CreativeAnalysis] = Field(default_factory=list)
     aggregated_analysis: Optional[AggregatedAnalysis] = None
     aggregation_error: Optional[str] = None  # Error during aggregation (task still completed)
     html_report: Optional[str] = None  # HTML report for frontend display
-    
+
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     error: Optional[str] = None  # Critical error (task failed)
-    
+
+    class Config:
+        use_enum_values = True
+
+
+# ============================================================================
+# Chat MVP Models
+# ============================================================================
+
+class ChatSessionStatus(str, Enum):
+    """Chat session status."""
+    ACTIVE = "active"
+    FINAL = "final"
+
+
+class CreativeObjective(str, Enum):
+    """Creative objective for brief."""
+    INSTALL = "install"
+    LEAD = "lead"
+    PURCHASE = "purchase"
+    SIGNUP = "signup"
+    TRAFFIC = "traffic"
+
+
+class CreativePlatform(str, Enum):
+    """Platform for creative."""
+    TIKTOK = "tiktok"
+    INSTAGRAM = "instagram"
+    YOUTUBE = "youtube"
+
+
+class CreativeFormat(str, Enum):
+    """Format for creative."""
+    REELS = "reels"
+    SHORTS = "shorts"
+    TIKTOK = "tiktok"
+    FEED = "feed"
+
+
+class BriefState(BaseModel):
+    """Brief state with known fields."""
+    product_offer: Optional[str] = None
+    audience: Optional[str] = None
+    objective: Optional[CreativeObjective] = None
+    platform: Optional[CreativePlatform] = None
+    format: Optional[CreativeFormat] = None
+    aspect_ratio: str = "9:16"
+    duration_s: Optional[int] = None
+    cta: Optional[str] = None
+
+    class Config:
+        use_enum_values = True
+
+
+class ChatSession(BaseModel):
+    """Chat session for brief collection."""
+    session_id: str
+    task_id: Optional[str] = None  # Optional link to Step-1 task
+    status: ChatSessionStatus = ChatSessionStatus.ACTIVE
+    known: BriefState = Field(default_factory=BriefState)
+    completeness: float = 0.0
+    missing_fields: List[str] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        use_enum_values = True
+
+
+class ChatMessage(BaseModel):
+    """Chat message in a session."""
+    session_id: str
+    role: str  # "user" or "assistant"
+    text: str
+    ts: datetime = Field(default_factory=datetime.utcnow)
+
     class Config:
         use_enum_values = True
