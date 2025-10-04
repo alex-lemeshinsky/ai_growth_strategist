@@ -199,9 +199,57 @@ async def analyze_creatives_task(task_id: str):
                         cached_path,
                         {
                             "page_name": ad.get("page_name"),
-                            "ad_archive_id": ad.get("ad_archive_id")
+                            "ad_archive_id": ad.get("ad_archive_id"),
+                            "publisher_platform": ad.get("publisher_platform"),
+                            "product_context": ad.get("title") or (ad.get("body", {}) or {}).get("text"),
                         }
                     )
+                
+                # Map new Performance Marketing schema to CreativeAnalysis fields
+                # New prompt returns: visual_style, messaging, emotional_journey, key_insights
+                visuals = result.get("visual_style")
+                
+                # CTA normalization
+                cta_raw = result.get("cta")
+                if isinstance(cta_raw, dict):
+                    cta_list = [cta_raw]
+                elif isinstance(cta_raw, list):
+                    cta_list = cta_raw
+                else:
+                    cta_list = []
+                
+                # Messaging: extract pains and value_props from new structure
+                messaging = result.get("messaging", {}) or {}
+                pains_list = messaging.get("pains") or []
+                pains_norm = [{"text": p.get("text") if isinstance(p, dict) else p} if not isinstance(p, dict) or "text" in p else p for p in pains_list]
+                vprops_list = messaging.get("value_props") or []
+                vprops_norm = [{"text": v.get("text") if isinstance(v, dict) else v} if not isinstance(v, dict) or "text" in v else v for v in vprops_list]
+                
+                # Storyboard: map emotional_journey to storyboard format
+                storyboard = result.get("emotional_journey") or result.get("storyboard", [])
+                
+                # Scores remain the same
+                scores = result.get("scores")
+                
+                # Summary: use key_insights for richer summary, fallback to summary field
+                key_insights_data = result.get("key_insights") or {}
+                if key_insights_data:
+                    # Create enriched summary from key_insights
+                    main_strat = key_insights_data.get("main_strategy", "")
+                    insights_list = key_insights_data.get("key_insights", [])
+                    hypotheses = key_insights_data.get("hypotheses_to_test", [])
+                    
+                    summary_parts = []
+                    if main_strat:
+                        summary_parts.append(f"**Стратегія:** {main_strat}")
+                    if insights_list:
+                        summary_parts.append("**Інсайти:** " + "; ".join(insights_list[:2]))
+                    if hypotheses:
+                        summary_parts.append("**Гіпотези:** " + "; ".join(hypotheses[:2]))
+                    
+                    summary = " | ".join(summary_parts) if summary_parts else result.get("summary")
+                else:
+                    summary = result.get("summary")
                 
                 # Create analysis object
                 analysis = CreativeAnalysis(
@@ -209,16 +257,16 @@ async def analyze_creatives_task(task_id: str):
                     ad_archive_id=ad.get("ad_archive_id"),
                     page_name=ad.get("page_name"),
                     hook=result.get("hook"),
-                    visual_style=result.get("visual_style"),
+                    visual_style=visuals,
                     on_screen_text=result.get("on_screen_text", []),
                     product_showcase=result.get("product_showcase"),
-                    cta=result.get("cta", []),
-                    pains=result.get("pains", []),
-                    value_props=result.get("value_props", []),
+                    cta=cta_list,
+                    pains=pains_norm,
+                    value_props=vprops_norm,
                     audio=result.get("audio"),
-                    storyboard=result.get("storyboard", []),
-                    scores=result.get("scores"),
-                    summary=result.get("summary"),
+                    storyboard=storyboard,
+                    scores=scores,
+                    summary=summary,
                     video_url=video_url,
                     cached_video_path=cached_path,
                     analyzed_at=datetime.utcnow()

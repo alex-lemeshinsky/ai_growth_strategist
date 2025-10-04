@@ -80,75 +80,64 @@ def analyze_video_file(
     if meta:
         context = f"\nМетадані креативу:\n{json.dumps(meta, ensure_ascii=False, indent=2)}\n"
     
-    # Prompt for video analysis (Ukrainian)
-    prompt = f"""Проаналізуй цей відеокреатив конкурента детально.
+    # Prompt for video analysis (Ukrainian) - Performance Marketing oriented
+    prompt = f"""Роль: Ти — експертний Performance Marketing Creative Strategist. Твоє завдання — не просто описати відео, а проаналізувати його ефективність, визначити психологічні тригери та надати дієві гіпотези для тестування.
 
+Проаналізуй цей відеокреатив конкурента, спираючись на наданий контекст.
+
+1. Контекст:
 {context}
 
-Завдання:
-1. **Hook (0-3 сек)**: Що відбувається в перші 3 секунди? Який хук використовується? На якій секунді точно? Яка тактика (швидкі зміни, запитання, bold claim, демо продукту, проблема)?
+2. Завдання Аналізу:
 
-2. **Візуальні елементи**: 
-   - Стиль (UGC, screencast, motion graphics, real footage)?
-   - Ефекти (jump cuts, zooms, transitions, filters)?
-   - Субтитри/текст на екрані (є/немає, стиль, колір)?
-   - Колір/настрій (яскраві/темні/мінімалізм)?
+Проведи глибокий аналіз за наступною структурою та надай відповідь виключно у форматі JSON.
 
-3. **Текст на екрані (OCR)**: Випиши весь видимий текст з екрану по таймкодах (якщо є).
+Hook (0-3 секунди): Визнач основний гачок. Який психологічний принцип він використовує (напр., Curiosity Gap, Social Proof, Loss Aversion, Shock)? Наскільки він релевантний для ЦА?
 
-4. **Показ продукту**:
-   - Як показують продукт (UI демо, реальний продукт, до/після, тільки текст)?
-   - На яких секундах показують UI/функції?
-   - Які ключові фічі підкреслюють?
+Візуальний Стиль та Динаміка: Оціни стиль, ефекти та кольорову гаму. Який темп у відео (повільний, швидкий, змішаний)? Як це впливає на сприйняття?
 
-5. **CTA (Call-to-Action)**:
-   - Де з'являється CTA (голос, текст на екрані, кінцева заставка)?
-   - Точний таймкод і текст CTA?
-   - Чи повторюється?
+Текст на екрані (OCR): Розпізнай та випиши весь текст з екрану з таймкодами.
 
-6. **Болі/Value Props**:
-   - Які проблеми/болі показують або згадують?
-   - Які переваги/рішення пропонують?
+Показ Продукту/Цінності: Як продукт інтегрований у сюжет? Чи показують лише фічі, чи демонструють результат/трансформацію для користувача?
 
-7. **Музика/Звук**:
-   - Настрій музики (енергійна, спокійна, драматична)?
-   - Чи є закадровий голос?
-   - Звукові ефекти?
+CTA (Call-to-Action): Проаналізуй заклик до дії. Чи є в ньому терміновість, обмеження або додатковий стимул (incentive)?
 
-8. **Покадровий сторіборд** (по сценах):
-   - Сцена 1 (0-X сек): що бачимо, що чуємо
-   - Сцена 2 (X-Y сек): що бачимо, що чуємо
-   - ... (для кожної зміни сцени)
+Ключове Повідомлення (Messaging): Які болі ЦА зачіпаються і які ціннісні пропозиції (value props) пропонуються як рішення? Як вони сформульовані (наприклад, через сторітелінг, пряме звернення, демонстрацію "до/після")?
 
-9. **Загальна оцінка** (0-1):
-   - Сила хука
-   - Чіткість CTA
-   - Видимість продукту
-   - Щільність меседжів
-   - Якість виконання
+Аудіо: Оціни музику, голос та звукові ефекти. Чи доповнюють вони візуальний ряд і підсилюють емоції?
+
+Наратив та Емоційний Шлях: Розбий відео на ключові сцени. Яку емоційну подорож проходить глядач (напр., від інтриги -> до проблеми -> до рішення -> до бажаного результату)?
+
+Карта Сильних та Слабких Сторін: Оціни ключові елементи за шкалою від 0 до 1, де 1 — максимальна ефективність.
+
+Ключові Висновки та Гіпотези: Сформулюй головну стратегію креативу, ключові інсайти та 2-3 конкретні гіпотези, які ми можемо протестувати у наших власних креативах.
 
 Відповідь виключно у форматі JSON:
 {{
   "hook": {{
     "time_start_s": 0.0,
     "time_end_s": 3.0,
-    "description": "детальний опис",
-    "tactic": "назва тактики",
+    "description": "детальний опис гачка",
+    "psychological_principle": "Curiosity Gap / Social Proof / Loss Aversion / Shock / інше",
+    "relevance_to_audience": "оцінка релевантності для ЦА",
     "strength": 0.8
   }},
   "visual_style": {{
-    "style": "UGC/screencast/etc",
-    "effects": ["effect1", "effect2"],
+    "style": "UGC/screencast/motion graphics/real footage/інше",
+    "effects": ["jump cuts", "zooms", "transitions", "filters"],
+    "color_palette": "опис кольорової гами",
+    "pacing": "slow/fast/mixed",
+    "pacing_impact": "як темп впливає на сприйняття",
     "has_captions": true/false,
-    "caption_style": "опис стилю",
-    "color_mood": "опис"
+    "caption_style": "опис стилю субтитрів"
   }},
   "on_screen_text": [
-    {{"timecode_s": 1.5, "text": "текст на екрані"}},
-    {{"timecode_s": 5.0, "text": "інший текст"}}
+    {{"timecode_s": 1.5, "text": "текст на екрані"}}
   ],
   "product_showcase": {{
-    "type": "UI demo/Real product/Before-After/Text only",
+    "type": "UI demo/Real product/Transformation/Result-focused/Feature-focused",
+    "integration_quality": "наскільки природньо інтегрований продукт",
+    "shows_transformation": true/false,
     "timecodes_s": [2.0, 5.5, 10.0],
     "key_features": ["feature1", "feature2"],
     "clarity_score": 0.7
@@ -156,29 +145,39 @@ def analyze_video_file(
   "cta": [
     {{
       "timecode_s": 12.0,
-      "text": "Download Now",
+      "text": "точний текст CTA",
       "channel": "on-screen/voice/both",
+      "has_urgency": true/false,
+      "has_incentive": true/false,
+      "incentive_description": "опис стимулу, якщо є",
       "strength": 0.9
     }}
   ],
-  "pains": [
-    {{"text": "опис болю", "timecode_s": 1.0}}
-  ],
-  "value_props": [
-    {{"text": "опис переваги", "timecode_s": 3.5}}
-  ],
+  "messaging": {{
+    "pains": [
+      {{"text": "біль ЦА", "timecode_s": 1.0, "presentation_style": "storytelling/direct/visual"}}
+    ],
+    "value_props": [
+      {{"text": "ціннісна пропозиція", "timecode_s": 3.5, "presentation_style": "before-after/testimonial/demonstration"}}
+    ],
+    "messaging_approach": "storytelling/direct address/problem-solution/before-after"
+  }},
   "audio": {{
     "has_voiceover": true/false,
-    "music_mood": "energetic/calm/dramatic/none",
-    "sound_effects": true/false
+    "voiceover_tone": "опис тону голосу",
+    "music_mood": "energetic/calm/dramatic/uplifting/none",
+    "sound_effects": true/false,
+    "audio_visual_alignment": "як аудіо доповнює візуальний ряд"
   }},
-  "storyboard": [
+  "emotional_journey": [
     {{
       "scene": 1,
       "time_start_s": 0.0,
       "time_end_s": 3.0,
       "what_we_see": "опис візуалу",
-      "what_we_hear": "опис аудіо"
+      "what_we_hear": "опис аудіо",
+      "emotional_state": "intrigue/problem/solution/desire/action",
+      "viewer_emotion": "яку емоцію відчуває глядач"
     }}
   ],
   "scores": {{
@@ -186,9 +185,24 @@ def analyze_video_file(
     "cta_clarity": 0.9,
     "product_visibility": 0.7,
     "message_density": 0.6,
-    "execution_quality": 0.8
+    "execution_quality": 0.8,
+    "emotional_impact": 0.7,
+    "relevance_to_audience": 0.8
   }},
-  "summary": "коротке резюме 2-3 речення"
+  "key_insights": {{
+    "main_strategy": "головна стратегія креативу в 1-2 реченнях",
+    "key_insights": [
+      "інсайт 1: що робить цей креатив ефективним",
+      "інсайт 2: ключова тактика або підхід",
+      "інсайт 3: унікальний елемент"
+    ],
+    "hypotheses_to_test": [
+      "Гіпотеза 1: конкретна ідея для тестування в наших креативах",
+      "Гіпотеза 2: альтернативний підхід на основі аналізу",
+      "Гіпотеза 3: елемент для A/B тестування"
+    ]
+  }},
+  "summary": "коротке резюме аналізу в 2-3 реченнях з фокусом на ефективності та застосуванні"
 }}
 
 Не вигадуй: якщо чогось не видно або не чути — пиши null або порожній масив."""

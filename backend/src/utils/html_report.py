@@ -568,7 +568,9 @@ def generate_creatives_section(creatives: List[Dict[str, Any]]) -> str:
                 "cta_clarity": "🎯 Чіткість CTA",
                 "product_visibility": "👁️ Видимість продукту",
                 "message_density": "📊 Щільність меседжів",
-                "execution_quality": "✨ Якість виконання"
+                "execution_quality": "✨ Якість виконання",
+                "emotional_impact": "❤️ Емоційний вплив",
+                "relevance_to_audience": "🎪 Релевантність для ЦА"
             }
             
             for key, label in score_labels.items():
