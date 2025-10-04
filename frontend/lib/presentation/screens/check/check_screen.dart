@@ -19,57 +19,77 @@ class CheckScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: theme.colorScheme.outlineVariant),
-            ),
-            child: SegmentedButton<CheckSegment>(
-              segments: const [
-                ButtonSegment(
-                  value: CheckSegment.myVideos,
-                  label: Text('My videos'),
-                  icon: Icon(Icons.video_library_outlined),
-                ),
-                ButtonSegment(
-                  value: CheckSegment.uploadVideo,
-                  label: Text('Upload video'),
-                  icon: Icon(Icons.cloud_upload_outlined),
-                ),
-              ],
-              showSelectedIcon: false,
-              selected: {state.segment},
-              onSelectionChanged: (selection) =>
-                  notifier.setSegment(selection.first),
-              style: ButtonStyle(
-                elevation: WidgetStateProperty.all(0),
-                shape: WidgetStateProperty.all(
-                  RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24)),
-                ),
-                backgroundColor: WidgetStateProperty.resolveWith(
-                  (states) => states.contains(WidgetState.selected)
-                      ? theme.colorScheme.primary
-                      : Colors.transparent,
-                ),
-                foregroundColor: WidgetStateProperty.resolveWith(
-                  (states) => states.contains(WidgetState.selected)
-                      ? theme.colorScheme.onPrimary
-                      : theme.colorScheme.onSurfaceVariant,
-                ),
-                overlayColor: WidgetStateProperty.all(
-                  theme.colorScheme.primary.withValues(alpha: 0.08),
+          Row(
+            children: [
+              Expanded(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
+                  ),
+                  child: SegmentedButton<CheckSegment>(
+                    segments: const [
+                      ButtonSegment(
+                        value: CheckSegment.myVideos,
+                        label: Text('My videos'),
+                        icon: Icon(Icons.video_library_outlined),
+                      ),
+                      ButtonSegment(
+                        value: CheckSegment.uploadVideo,
+                        label: Text('Upload video'),
+                        icon: Icon(Icons.cloud_upload_outlined),
+                      ),
+                    ],
+                    showSelectedIcon: false,
+                    selected: {state.segment},
+                    onSelectionChanged: (selection) => notifier.setSegment(selection.first),
+                    style: ButtonStyle(
+                      elevation: WidgetStateProperty.all(0),
+                      shape: WidgetStateProperty.all(
+                        RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      ),
+                      backgroundColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.selected)
+                            ? theme.colorScheme.primary
+                            : Colors.transparent,
+                      ),
+                      foregroundColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.selected)
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.onSurfaceVariant,
+                      ),
+                      overlayColor: WidgetStateProperty.all(
+                        theme.colorScheme.primary.withValues(alpha: 0.08),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 12),
+              OutlinedButton.icon(
+                onPressed: state.isLoadingFiles ? null : () => notifier.refreshDriveFiles(),
+                icon: state.isLoadingFiles
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.refresh),
+                label: const Text('Refresh'),
+              ),
+            ],
           ),
           const SizedBox(height: 32),
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               child: state.segment == CheckSegment.myVideos
-                  ? _MyVideosPlaceholder(theme: theme)
+                  ? _MyVideosView(
+                      key: const ValueKey('drive-view'),
+                      state: state,
+                      onRefresh: notifier.refreshDriveFiles,
+                    )
                   : const UploadVideoForm(),
             ),
           ),
@@ -79,20 +99,72 @@ class CheckScreen extends ConsumerWidget {
   }
 }
 
-class _MyVideosPlaceholder extends StatelessWidget {
-  const _MyVideosPlaceholder({required this.theme});
+class _MyVideosView extends StatelessWidget {
+  const _MyVideosView({super.key, required this.state, required this.onRefresh});
 
-  final ThemeData theme;
+  final CheckScreenState state;
+  final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
+    if (state.isLoadingFiles) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (state.driveError != null) {
+      return _DriveErrorView(message: state.driveError!, onRetry: onRefresh);
+    }
+
+    if (state.driveFiles.isEmpty) {
+      return const _EmptyDrivePlaceholder();
+    }
+
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: state.driveFiles.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        padding: const EdgeInsets.only(bottom: 16),
+        itemBuilder: (context, index) {
+          final file = state.driveFiles[index];
+          final modified = file.modifiedTime != null
+              ? 'Updated ${file.modifiedTime!.toLocal().toString().split('.').first}'
+              : 'Google Drive file';
+          return Card(
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                child: const Icon(Icons.insert_drive_file_outlined),
+              ),
+              title: Text(file.name),
+              subtitle: Text(modified),
+              trailing: Text(
+                file.mimeType,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _EmptyDrivePlaceholder extends StatelessWidget {
+  const _EmptyDrivePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
-        key: const ValueKey('my-videos'),
+        key: const ValueKey('my-videos-empty'),
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.auto_awesome_motion,
-              size: 48, color: theme.colorScheme.primary),
+          Icon(Icons.auto_awesome_motion, size: 48, color: theme.colorScheme.primary),
           const SizedBox(height: 16),
           Text(
             'Your generated videos will appear here.',
@@ -102,8 +174,7 @@ class _MyVideosPlaceholder extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             'Track performance and request new variations in seconds.',
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
         ],
@@ -135,9 +206,7 @@ class UploadVideoForm extends ConsumerWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: state.isHovering
-                ? theme.colorScheme.primary
-                : theme.colorScheme.outlineVariant,
+            color: state.isHovering ? theme.colorScheme.primary : theme.colorScheme.outlineVariant,
             width: 1.6,
           ),
           color: state.isHovering
@@ -148,8 +217,7 @@ class UploadVideoForm extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cloud_upload_rounded,
-                size: 54, color: theme.colorScheme.primary),
+            Icon(Icons.cloud_upload_rounded, size: 54, color: theme.colorScheme.primary),
             const SizedBox(height: 18),
             Text(
               'Drop your video here',
@@ -170,10 +238,8 @@ class UploadVideoForm extends ConsumerWidget {
               icon: const Icon(Icons.video_file_outlined),
               label: const Text('Select video from device'),
               style: ElevatedButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
             ),
             if (state.selectedVideoName != null) ...[
@@ -188,8 +254,7 @@ class UploadVideoForm extends ConsumerWidget {
               const SizedBox(height: 16),
               Text(
                 state.errorMessage!,
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.error),
+                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -200,9 +265,45 @@ class UploadVideoForm extends ConsumerWidget {
   }
 }
 
+class _DriveErrorView extends StatelessWidget {
+  const _DriveErrorView({required this.message, required this.onRetry});
+
+  final String message;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              message,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () => onRetry(),
+            icon: const Icon(Icons.refresh),
+            label: const Text('Try again'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SelectedVideoTile extends StatelessWidget {
-  const _SelectedVideoTile(
-      {required this.name, this.size, required this.onClear});
+  const _SelectedVideoTile({required this.name, this.size, required this.onClear});
 
   final String name;
   final int? size;
@@ -240,8 +341,7 @@ class _SelectedVideoTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             padding: const EdgeInsets.all(12),
-            child: Icon(Icons.play_circle_fill,
-                color: theme.colorScheme.primary, size: 24),
+            child: Icon(Icons.play_circle_fill, color: theme.colorScheme.primary, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -251,8 +351,7 @@ class _SelectedVideoTile extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: theme.textTheme.bodyLarge
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (_readableSize.isNotEmpty)
