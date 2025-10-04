@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from src.api.routes import router
+from src.api.policy_routes import router as policy_router
 from src.db import MongoDB
 
 # Load environment variables
@@ -37,6 +38,7 @@ app.add_middleware(
 
 # Include routes
 app.include_router(router, prefix="/api/v1", tags=["ads"])
+app.include_router(policy_router, prefix="/api/v1/policy", tags=["policy"])
 
 
 @app.get("/")

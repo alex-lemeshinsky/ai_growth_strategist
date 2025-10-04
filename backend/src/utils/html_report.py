@@ -100,7 +100,7 @@ def generate_html_report(
         
         .stat-card .label {{
             font-size: 14px;
-            color: #666;
+            color: #333;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }}
@@ -258,7 +258,7 @@ def generate_html_report(
             border-radius: 6px;
             margin-bottom: 15px;
             font-style: italic;
-            color: #555;
+            color: #333;
         }}
         
         .scores {{
