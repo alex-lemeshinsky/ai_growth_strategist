@@ -2,9 +2,9 @@
 MongoDB models for tasks, creatives, and analysis results.
 """
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Union
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class TaskStatus(str, Enum):
@@ -46,12 +46,24 @@ class AggregatedAnalysis(BaseModel):
     pain_points: List[str] = Field(default_factory=list)
     concepts: List[str] = Field(default_factory=list)
     visual_trends: Dict[str, Any] = Field(default_factory=dict)
-    hooks: List[Dict[str, Any]] = Field(default_factory=list)
+    hooks: List[Union[str, Dict[str, Any]]] = Field(default_factory=list)  # Allow both strings and dicts
     core_idea: Optional[str] = None
     theme: Optional[str] = None
     message: Optional[str] = None
     recommendations: Optional[str] = None
     video_prompt: Optional[str] = None
+    
+    @field_validator('hooks', mode='before')
+    @classmethod
+    def validate_hooks(cls, v):
+        """Ensure hooks is a list, even if LLM returns something else."""
+        if v is None:
+            return []
+        if isinstance(v, str):
+            return [v]
+        if not isinstance(v, list):
+            return []
+        return v
 
 
 class Task(BaseModel):
@@ -69,11 +81,12 @@ class Task(BaseModel):
     # Analysis results
     creatives_analyzed: List[CreativeAnalysis] = Field(default_factory=list)
     aggregated_analysis: Optional[AggregatedAnalysis] = None
+    aggregation_error: Optional[str] = None  # Error during aggregation (task still completed)
     
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    error: Optional[str] = None
+    error: Optional[str] = None  # Critical error (task failed)
     
     class Config:
         use_enum_values = True

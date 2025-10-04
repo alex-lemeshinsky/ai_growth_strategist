@@ -187,6 +187,72 @@ async def get_task(task_id: str):
         )
 
 
+@router.post("/analyze-creatives/{task_id}")
+async def analyze_creatives(task_id: str):
+    """
+    Start creative analysis for a parsed task.
+    Only works if task status is PARSED and has ads to analyze.
+    """
+    try:
+        db = MongoDB.get_db()
+        
+        # Get task
+        task = await db.tasks.find_one({"task_id": task_id})
+        
+        if not task:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Task {task_id} not found"
+            )
+        
+        # Check if task is in PARSED status
+        if task["status"] != TaskStatus.PARSED:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Task must be in PARSED status. Current status: {task['status']}"
+            )
+        
+        # Check if there are ads to analyze
+        total_ads = task.get("total_ads", 0)
+        if total_ads == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No ads found in this task to analyze"
+            )
+        
+        # Check if analysis already exists
+        if task.get("creatives_analyzed"):
+            return {
+                "success": False,
+                "message": "Task already has analysis results. Analysis was already completed.",
+                "task_id": task_id,
+                "status": task["status"]
+            }
+        
+        # Start analysis in background
+        import asyncio
+        asyncio.create_task(analyze_creatives_task(task_id))
+        
+        logger.info(f"✅ Started analysis for task {task_id} ({total_ads} ads)")
+        
+        return {
+            "success": True,
+            "message": f"Analysis started for {total_ads} ads. Check task status for progress.",
+            "task_id": task_id,
+            "total_ads": total_ads,
+            "status": "analyzing"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error starting analysis for task {task_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to start analysis: {str(e)}"
+        )
+
+
 @router.get("/health")
 async def health_check():
     """Health check endpoint."""

@@ -35,17 +35,46 @@ def generate_analysis(
     
     model = genai.GenerativeModel(model_to_use)
 
-    system_msg = (
-        "Ти — Senior Creative Strategist & Performance Marketer. "
-        "Проаналізуй відеорекламу конкурента. Не вигадуй фактів: якщо даних бракує — став null."
-    )
-
-    user_msg = (
-        "Контекст — текст/метадані креативу (не відео):\n"
-        f"{json.dumps(video_facts, ensure_ascii=False)}\n\n"
-        "Завдання: побудуй структурований JSON з hook/CTA/болі/value props/стиль/сторіборд/музика/підсумок. "
-        "Якщо немає даних (бо немає STT/OCR/сцен) — повертай null/порожні масиви."
-    )
+    # Check if this is an aggregation task
+    task_type = video_facts.get("task")
+    
+    if task_type == "aggregate_competitor_analysis":
+        # Aggregation prompt
+        system_msg = (
+            "Ти — Senior Creative Strategist & Performance Marketer. "
+            "Твоя задача — знайти паттерни у відеокреативах конкурентів і дати практичні рекомендації."
+        )
+        
+        user_msg = (
+            f"Проаналізовано {video_facts.get('creatives_count', 0)} відеокреативів конкурента.\n\n"
+            f"Дані аналізів:\n{video_facts.get('analyses_summary')}\n\n"
+            "Завдання: агрегуй всі аналізи і видай структурований JSON:\n"
+            "{\n"
+            '  "pain_points": ["біль1", "біль2", ...],  // Всі згадані болі аудиторії\n'
+            '  "concepts": ["концепт1", "концепт2", ...],  // Повторювані концепції/теми\n'
+            '  "visual_trends": {"style": "домінуючий стиль", "effects": [...]},\n'
+            '  "hooks": ["хук1", "хук2", ...],  // Найпопулярніші хуки\n'
+            '  "core_idea": "ключова ідея креативів",\n'
+            '  "theme": "загальна тема",\n'
+            '  "message": "основний меседж",\n'
+            '  "recommendations": "практичні поради для створення власних креативів",\n'
+            '  "video_prompt": "детальний prompt для генерації аналогічного відео (400+ слів)"\n'
+            "}\n\n"
+            "Не вигадуй: базуйся лише на наданих даних."
+        )
+    else:
+        # Single video analysis prompt
+        system_msg = (
+            "Ти — Senior Creative Strategist & Performance Marketer. "
+            "Проаналізуй відеорекламу конкурента. Не вигадуй фактів: якщо даних бракує — став null."
+        )
+        
+        user_msg = (
+            "Контекст — текст/метадані креативу (не відео):\n"
+            f"{json.dumps(video_facts, ensure_ascii=False)}\n\n"
+            "Завдання: побудуй структурований JSON з hook/CTA/болі/value props/стиль/сторіборд/музика/підсумок. "
+            "Якщо немає даних (бо немає STT/OCR/сцен) — повертай null/порожні масиви."
+        )
 
     generation_config = {
         "temperature": 0.3,

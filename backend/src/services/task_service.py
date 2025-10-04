@@ -162,24 +162,40 @@ async def analyze_creatives_task(task_id: str):
         
         # Analyze each creative
         analyses: List[CreativeAnalysis] = []
-        for ad in raw_ads:
+        failed_count = 0
+        loop = asyncio.get_event_loop()
+        
+        for idx, ad in enumerate(raw_ads, 1):
+            ad_id = ad.get('ad_archive_id', f'unknown_{idx}')
             try:
+                logger.info(f"Analyzing creative {idx}/{len(raw_ads)}: {ad_id}")
+                
                 video_url = _pick_video_url(ad)
                 if not video_url:
-                    logger.warning(f"No video for ad {ad.get('ad_archive_id')}")
+                    logger.warning(f"No video URL found for ad {ad_id}")
+                    failed_count += 1
                     continue
                 
-                # Cache video
-                cached_path = _cache_video(video_url)
+                # Cache video (blocking operation - run in executor)
+                from concurrent.futures import ThreadPoolExecutor
+                with ThreadPoolExecutor() as executor:
+                    cached_path = await loop.run_in_executor(
+                        executor,
+                        _cache_video,
+                        video_url
+                    )
                 
-                # Analyze with Gemini
-                result = analyze_video_file(
-                    cached_path,
-                    meta={
-                        "page_name": ad.get("page_name"),
-                        "ad_archive_id": ad.get("ad_archive_id")
-                    }
-                )
+                # Analyze with Gemini (blocking operation - run in executor)
+                with ThreadPoolExecutor() as executor:
+                    result = await loop.run_in_executor(
+                        executor,
+                        analyze_video_file,
+                        cached_path,
+                        {
+                            "page_name": ad.get("page_name"),
+                            "ad_archive_id": ad.get("ad_archive_id")
+                        }
+                    )
                 
                 # Create analysis object
                 analysis = CreativeAnalysis(
@@ -203,27 +219,45 @@ async def analyze_creatives_task(task_id: str):
                 )
                 
                 analyses.append(analysis)
-                logger.info(f"✅ Analyzed creative {ad.get('ad_archive_id')}")
+                logger.info(f"✅ Successfully analyzed creative {ad_id}")
                 
             except Exception as e:
-                logger.error(f"Error analyzing {ad.get('ad_archive_id')}: {e}")
+                logger.error(f"❌ Error analyzing {ad_id}: {e}")
+                failed_count += 1
+                # Continue with other creatives
                 continue
         
+        logger.info(f"📊 Analysis summary: {len(analyses)} successful, {failed_count} failed")
+        
         if not analyses:
-            raise ValueError("No creatives could be analyzed")
+            raise ValueError(f"No creatives could be analyzed. All {len(raw_ads)} attempts failed.")
         
-        # Aggregate analysis with LLM
-        aggregated = await _aggregate_analysis(analyses)
+        # Aggregate analysis with LLM (with fallback)
+        aggregated = None
+        aggregation_error = None
+        try:
+            aggregated = await _aggregate_analysis(analyses)
+            logger.info(f"✅ Aggregation completed successfully")
+        except Exception as e:
+            logger.warning(f"⚠️ Aggregation failed, but saving individual analyses: {e}")
+            aggregation_error = str(e)
         
-        # Update task with results
+        # Update task with results (even if aggregation failed)
+        update_data = {
+            "status": TaskStatus.COMPLETED,
+            "creatives_analyzed": [a.model_dump() for a in analyses],
+            "updated_at": datetime.utcnow()
+        }
+        
+        if aggregated:
+            update_data["aggregated_analysis"] = aggregated.model_dump()
+        
+        if aggregation_error:
+            update_data["aggregation_error"] = aggregation_error
+        
         await db.tasks.update_one(
             {"task_id": task_id},
-            {"$set": {
-                "status": TaskStatus.COMPLETED,
-                "creatives_analyzed": [a.model_dump() for a in analyses],
-                "aggregated_analysis": aggregated.model_dump() if aggregated else None,
-                "updated_at": datetime.utcnow()
-            }}
+            {"$set": update_data}
         )
         
         logger.info(f"✅ Task {task_id}: Analysis completed, {len(analyses)} creatives")
@@ -243,6 +277,7 @@ async def analyze_creatives_task(task_id: str):
 async def _aggregate_analysis(analyses: List[CreativeAnalysis]) -> AggregatedAnalysis:
     """Aggregate analysis across all creatives using LLM."""
     from src.analysis.gemini_client import generate_analysis
+    from concurrent.futures import ThreadPoolExecutor
     
     # Build summary of all analyses
     summaries = []
@@ -260,21 +295,50 @@ async def _aggregate_analysis(analyses: List[CreativeAnalysis]) -> AggregatedAna
     
     prompt_context = json.dumps(summaries, ensure_ascii=False)
     
-    # LLM aggregation prompt
-    result = generate_analysis({
-        "task": "aggregate_competitor_analysis",
-        "creatives_count": len(analyses),
-        "analyses_summary": prompt_context
-    }, schema=None)
+    # LLM aggregation prompt (blocking operation - run in executor)
+    loop = asyncio.get_event_loop()
+    with ThreadPoolExecutor() as executor:
+        result = await loop.run_in_executor(
+            executor,
+            generate_analysis,
+            {
+                "task": "aggregate_competitor_analysis",
+                "creatives_count": len(analyses),
+                "analyses_summary": prompt_context
+            },
+            None  # schema parameter
+        )
     
-    return AggregatedAnalysis(
-        pain_points=result.get("pain_points", []),
-        concepts=result.get("concepts", []),
-        visual_trends=result.get("visual_trends", {}),
-        hooks=result.get("hooks", []),
-        core_idea=result.get("core_idea"),
-        theme=result.get("theme"),
-        message=result.get("message"),
-        recommendations=result.get("recommendations"),
-        video_prompt=result.get("video_prompt")
-    )
+    # Validate and clean result
+    def _safe_get_list(key, default=None):
+        val = result.get(key, default or [])
+        if val is None:
+            return []
+        if isinstance(val, str):
+            return [val]
+        if isinstance(val, list):
+            return val
+        return []
+    
+    def _safe_get_dict(key, default=None):
+        val = result.get(key, default or {})
+        if isinstance(val, dict):
+            return val
+        return {}
+    
+    try:
+        return AggregatedAnalysis(
+            pain_points=_safe_get_list("pain_points"),
+            concepts=_safe_get_list("concepts"),
+            visual_trends=_safe_get_dict("visual_trends"),
+            hooks=_safe_get_list("hooks"),
+            core_idea=result.get("core_idea"),
+            theme=result.get("theme"),
+            message=result.get("message"),
+            recommendations=result.get("recommendations"),
+            video_prompt=result.get("video_prompt")
+        )
+    except Exception as e:
+        logger.error(f"Failed to create AggregatedAnalysis from result: {e}")
+        logger.error(f"Raw result: {json.dumps(result, ensure_ascii=False)[:500]}")
+        raise
