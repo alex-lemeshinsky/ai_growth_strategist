@@ -1,7 +1,1 @@
 .env
-
-.venv
-
-backend/.cache
-backend/creatives/*
-backend/analysis/*

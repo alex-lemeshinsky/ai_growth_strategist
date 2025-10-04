@@ -1,0 +1,131 @@
+{
+  "hook": {
+    "time_start_s": 0.0,
+    "time_end_s": 3.0,
+    "description": "Woman in a car states \"Three signs that you're destroying your phone!\"",
+    "tactic": "bold claim",
+    "strength": 0.9
+  },
+  "visual_style": {
+    "style": "UGC/screencast",
+    "effects": [],
+    "has_captions": true,
+    "caption_style": "White text with black outline",
+    "color_mood": "bright"
+  },
+  "on_screen_text": [
+    {
+      "timecode_s": 1.5,
+      "text": "❌Cleaning photos manually❌"
+    },
+    {
+      "timecode_s": 3.8,
+      "text": "❌Deleting apps❌"
+    },
+    {
+      "timecode_s": 6.7,
+      "text": "❌Buing Storage❌"
+    },
+    {
+      "timecode_s": 15.5,
+      "text": "OPTIMIZE STORAGE"
+    },
+    {
+      "timecode_s": 19.0,
+      "text": "FIND DUPLICATE PHOTOS"
+    },
+    {
+      "timecode_s": 20.0,
+      "text": "DELETE DUPLICATE PHOTOS"
+    },
+    {
+      "timecode_s": 21.5,
+      "text": "FIND DUPLICATE CONTACTS"
+    },
+    {
+      "timecode_s": 22.5,
+      "text": "MERGE DUPLICATE CONTACTS"
+    }
+  ],
+  "product_showcase": {
+    "type": "UI demo",
+    "timecodes_s": [
+      13.0,
+      15.0,
+      17.0,
+      18.0,
+      21.0
+    ],
+    "key_features": [
+      "Optimize storage",
+      "Find duplicate photos",
+      "Delete duplicate photos",
+      "Find duplicate contacts",
+      "Merge duplicate contacts"
+    ],
+    "clarity_score": 0.8
+  },
+  "cta": [
+    {
+      "timecode_s": 23.5,
+      "text": "Try it right now",
+      "channel": "voice",
+      "strength": 0.8
+    }
+  ],
+  "pains": [
+    {
+      "text": "Phone storage is full",
+      "timecode_s": 3.5
+    }
+  ],
+  "value_props": [
+    {
+      "text": "Free up phone storage by using Cleaner Guru to delete duplicate photos and merge contacts",
+      "timecode_s": 13.0
+    }
+  ],
+  "audio": {
+    "has_voiceover": true,
+    "music_mood": "energetic",
+    "sound_effects": true
+  },
+  "storyboard": [
+    {
+      "scene": 1,
+      "time_start_s": 0.0,
+      "time_end_s": 3.0,
+      "what_we_see": "Woman in car states \"Three signs that you're destroying your phone!\"",
+      "what_we_hear": "Woman states \"Three signs that you're destroying your phone!\""
+    },
+    {
+      "scene": 2,
+      "time_start_s": 3.0,
+      "time_end_s": 7.0,
+      "what_we_see": "Hands crossing out images of phone screens with red marker",
+      "what_we_hear": "Woman states \"Number one is deleting photos manually. Number two is deleting all the apps on the phone. Number three is buying cloud storage.\""
+    },
+    {
+      "scene": 3,
+      "time_start_s": 7.0,
+      "time_end_s": 13.0,
+      "what_we_see": "Hands crossing out images of phone screens with red marker. Then, hands navigating phone screen.",
+      "what_we_hear": "Woman states \"These three mistakes can never free up your phone storage. Instead, use Cleaner Guru.\""
+    },
+    {
+      "scene": 4,
+      "time_start_s": 13.0,
+      "time_end_s": 25.0,
+      "what_we_see": "Hands navigating phone screen.",
+      "what_we_hear": "Woman states \"Open this. Optimize your storage. Get rid of duplicate photos and videos. Merge duplicate contacts. Try it right now.\""
+    }
+  ],
+  "scores": {
+    "hook_strength": 0.8,
+    "cta_clarity": 0.9,
+    "product_visibility": 0.7,
+    "message_density": 0.6,
+    "execution_quality": 0.8
+  },
+  "summary": "The video is an advertisement for Cleaner Guru. The video shows three mistakes people make when trying to free up phone storage and then shows how Cleaner Guru can help."
+}

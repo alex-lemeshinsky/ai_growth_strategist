@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="Black">
-    <option name="sdkName" value="Poetry (kauri_crypto_node_ethereum)" />
-  </component>
   <component name="GithubDefaultAccount">
     <option name="defaultAccountId" value="ffe3d414-d058-4e00-a100-2811cefb3a5a" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="uv (ai_growth_strategist)" project-jdk-type="Python SDK" />
 </project>

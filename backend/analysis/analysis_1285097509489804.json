@@ -1,0 +1,60 @@
+{
+  "creative_id": "1285097509489804",
+  "meta": {
+    "creative_id": "1285097509489804",
+    "page_name": "Guru Apps",
+    "is_active": true,
+    "active_days": 10,
+    "publisher_platform": [
+      "FACEBOOK",
+      "INSTAGRAM",
+      "AUDIENCE_NETWORK",
+      "MESSENGER"
+    ],
+    "start_date": "2025-09-24 07:00:00",
+    "end_date": "2025-10-04 07:00:00",
+    "text_primary": "{{product.brand}}",
+    "title_primary": "{{product.name}}",
+    "caption_primary": "cleanerguru.universeapps.limited",
+    "variants_count": 5,
+    "cta_variants": [
+      "Download",
+      "Download",
+      "Download",
+      "Download",
+      "Download"
+    ]
+  },
+  "scores": {
+    "hook": null,
+    "cta": null,
+    "product_visibility": null,
+    "message_density": null,
+    "structure": null,
+    "music_fit": null,
+    "overall": 0.0
+  },
+  "hooks": [],
+  "cta": [],
+  "pains": [],
+  "value_props": [],
+  "concept_style": {
+    "style": null,
+    "effects": [],
+    "captions": {}
+  },
+  "storyboard": [],
+  "product_showcase": {
+    "type": null,
+    "scenes": [],
+    "features": [],
+    "clarity_score": null
+  },
+  "music": {
+    "bpm": null,
+    "mood": null,
+    "notes": null
+  },
+  "summary": "LLM error: 400 * GenerateContentRequest.generation_config.response_schema.properties[value_props].items: missing field.\n* GenerateContentRequest.generation_config.response_schema.properties[cta].items: missing field.\n* GenerateContentRequest.generation_config.response_schema.properties[storyboard].items: missing field.\n* GenerateContentRequest.generation_config.response_schema.properties[hooks].items: missing field.\n* GenerateContentRequest.generation_config.response_schema.properties[pains].items: missing field.\n* GenerateContentRequest.generation_config.response_schema.properties[\"product_showcase\"].properties: should be non-empty for OBJECT type\n* GenerateContentRequest.generation_config.response_schema.properties[\"music\"].properties: should be non-empty for OBJECT type\n* GenerateContentRequest.generation_config.response_schema.properties[\"concept_style\"].properties: should be non-empty for OBJECT type\n* GenerateContentRequest.generation_config.response_schema.properties[\"meta\"].properties: should be non-empty for OBJECT type\n",
+  "overall_rank_score": 0.79
+}
