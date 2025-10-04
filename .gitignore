@@ -2,3 +2,6 @@
 backend/.cache
 backend/creatives
 .venv
+.idea
+
+__pycache_
