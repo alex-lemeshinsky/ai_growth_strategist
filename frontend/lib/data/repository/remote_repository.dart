@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
@@ -16,7 +17,7 @@ final remoteRepositoryProvider = Provider<RemoteRepository>((ref) {
 class RemoteRepository {
   RemoteRepository({required http.Client client, Uri? baseUri})
     : _client = client,
-      _baseUri = baseUri ?? Uri.parse('https://2c41e381b565.ngrok-free.app');
+      _baseUri = baseUri ?? Uri.parse(dotenv.get("BASE_URL"));
 
   final http.Client _client;
   final Uri _baseUri;

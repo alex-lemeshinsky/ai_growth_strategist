@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -90,7 +91,7 @@ class _AnalyzeScreenState extends ConsumerState<AnalyzeScreen> {
     final isCompleted = task?.status.toUpperCase() == 'COMPLETED';
     final htmlReport = task?.htmlReport;
     final reportUrl = state.taskId != null
-        ? 'https://2c41e381b565.ngrok-free.app/report/task/${state.taskId}'
+        ? '${dotenv.get("BASE_URL")}/report/task/${state.taskId}'
         : null;
 
     return Padding(
