@@ -8,7 +8,7 @@ import '../../../data/repository/google_drive_repository.dart';
 import 'check_screen_state.dart';
 
 final checkScreenProvider =
-    NotifierProvider.autoDispose<CheckScreenNotifier, CheckScreenState>(
+    NotifierProvider<CheckScreenNotifier, CheckScreenState>(
   CheckScreenNotifier.new,
 );
 

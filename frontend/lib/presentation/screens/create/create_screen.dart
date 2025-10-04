@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../controllers/create/create_screen_notifier.dart';
 import '../../controllers/create/create_screen_state.dart';
@@ -85,11 +86,11 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
                       ),
                       contentPadding: const EdgeInsets.fromLTRB(22, 24, 78, 24),
                     ),
-                  ),
-                  Positioned(
-                    bottom: 16,
-                    right: 16,
-                    child: IconButton.filled(
+              ),
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: IconButton.filled(
                       onPressed: state.canSubmit
                           ? () async {
                               FocusScope.of(context).unfocus();
@@ -104,14 +105,75 @@ class _CreateScreenState extends ConsumerState<CreateScreen> {
                             )
                           : const Icon(Icons.send_rounded),
                       tooltip: 'Submit prompt',
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
+          if (state.isGenerating || state.taskId != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                color: theme.colorScheme.primary.withValues(alpha: 0.08),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      state.isGenerating
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(Icons.check_circle,
+                              color: theme.colorScheme.primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          state.isGenerating
+                              ? 'Generating video variations… hang tight.'
+                              : 'Generation triggered successfully.',
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (state.lastKnownStatus != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Status: ${state.lastKnownStatus}',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                  if (state.generatedFileUrl != null) ...[
+                    const SizedBox(height: 12),
+                    TextButton.icon(
+                      onPressed: () => _openGeneratedFile(state.generatedFileUrl!),
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text('Open generated video'),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
         ),
       ),
     );
+  }
+
+  Future<void> _openGeneratedFile(String url) async {
+    final uri = Uri.parse(url);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unable to open generated file. URL: $url')),
+      );
+    }
   }
 }

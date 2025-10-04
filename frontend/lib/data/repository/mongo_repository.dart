@@ -24,10 +24,7 @@ class MongoRepository {
 
     final db = await _dbFactory!();
     if (!db.isConnected) {
-      await db.open(
-        // secure: true,
-        tlsAllowInvalidCertificates: true,
-      );
+      await db.open(secure: true, tlsAllowInvalidCertificates: true);
     }
     _db = db;
     return db;
