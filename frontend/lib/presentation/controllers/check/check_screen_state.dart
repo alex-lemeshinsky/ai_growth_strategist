@@ -7,7 +7,7 @@ part 'check_screen_state.freezed.dart';
 enum CheckSegment { myVideos, uploadVideo }
 
 @freezed
-class CheckScreenState with _$CheckScreenState {
+abstract class CheckScreenState with _$CheckScreenState {
   const factory CheckScreenState({
     @Default(CheckSegment.myVideos) CheckSegment segment,
     @Default(false) bool isHovering,

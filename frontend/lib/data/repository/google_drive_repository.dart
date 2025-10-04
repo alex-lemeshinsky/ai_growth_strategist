@@ -18,13 +18,13 @@ class DriveFile {
   });
 
   factory DriveFile.fromApi(drive.File file) => DriveFile(
-        id: file.id ?? '',
-        name: file.name ?? 'Untitled',
-        mimeType: file.mimeType ?? 'application/octet-stream',
-        modifiedTime: file.modifiedTime,
-        iconLink: file.iconLink,
-        thumbnailLink: file.thumbnailLink,
-      );
+    id: file.id ?? '',
+    name: file.name ?? 'Untitled',
+    mimeType: file.mimeType ?? 'application/octet-stream',
+    modifiedTime: file.modifiedTime,
+    iconLink: file.iconLink,
+    thumbnailLink: file.thumbnailLink,
+  );
 
   final String id;
   final String name;
@@ -43,12 +43,9 @@ typedef ConsentPrompt = FutureOr<void> Function(Uri consentUrl);
 /// entries inside the `.env` file. Make sure to call `dotenv.load()` before
 /// constructing this class (typically in `main()`).
 class GoogleDriveRepository {
-  GoogleDriveRepository._internal({
-    ConsentPrompt? promptUserForConsent,
-    http.Client? httpClient,
-  })  : _baseClient = httpClient ?? http.Client(),
-        _promptUserForConsent =
-            promptUserForConsent ?? GoogleDriveRepository._defaultConsentPrompt;
+  GoogleDriveRepository._internal({ConsentPrompt? promptUserForConsent, http.Client? httpClient})
+    : _baseClient = httpClient ?? http.Client(),
+      _promptUserForConsent = promptUserForConsent ?? GoogleDriveRepository._defaultConsentPrompt;
 
   factory GoogleDriveRepository({ConsentPrompt? promptUserForConsent}) {
     if (promptUserForConsent != null) {
@@ -57,8 +54,7 @@ class GoogleDriveRepository {
     return _instance;
   }
 
-  static final GoogleDriveRepository _instance =
-      GoogleDriveRepository._internal();
+  static final GoogleDriveRepository _instance = GoogleDriveRepository._internal();
 
   static const _scopes = <String>[drive.DriveApi.driveReadonlyScope];
 
@@ -93,8 +89,7 @@ class GoogleDriveRepository {
       q: buffer.toString(),
       pageSize: pageSize.clamp(1, 1000),
       pageToken: pageToken,
-      $fields:
-          'files(id,name,mimeType,modifiedTime,iconLink,thumbnailLink),nextPageToken',
+      $fields: 'files(id,name,mimeType,modifiedTime,iconLink,thumbnailLink),nextPageToken',
       orderBy: 'modifiedTime desc',
       spaces: 'drive',
     );
@@ -107,20 +102,17 @@ class GoogleDriveRepository {
     int pageSize = 100,
     String? pageToken,
   }) async {
-    final response = await listFiles(
-        folderId: folderId, pageSize: pageSize, pageToken: pageToken);
+    final response = await listFiles(folderId: folderId, pageSize: pageSize, pageToken: pageToken);
     final files = response.files ?? const <drive.File>[];
     return files.map(DriveFile.fromApi).toList(growable: false);
   }
 
-  Future<List<DriveFile>> listAllFilesInFolder(
-      {required String folderId}) async {
+  Future<List<DriveFile>> listAllFilesInFolder({required String folderId}) async {
     final files = <DriveFile>[];
     String? token;
 
     do {
-      final response =
-          await listFiles(folderId: folderId, pageSize: 1000, pageToken: token);
+      final response = await listFiles(folderId: folderId, pageSize: 1000, pageToken: token);
       final pageFiles = response.files ?? const <drive.File>[];
       files.addAll(pageFiles.map(DriveFile.fromApi));
       token = response.nextPageToken;
@@ -136,7 +128,7 @@ class GoogleDriveRepository {
 
     if (!dotenv.isInitialized) {
       try {
-        await dotenv.load(isOptional: true);
+        await dotenv.load();
       } catch (error, stackTrace) {
         Error.throwWithStackTrace(
           StateError('Unable to load environment configuration: $error'),
@@ -162,17 +154,12 @@ class GoogleDriveRepository {
 
     final clientId = auth.ClientId(clientIdValue, clientSecretValue);
 
-    _authorizedClient = await auth.clientViaUserConsent(
-      clientId,
-      _scopes,
-      (url) {
-        final result = _promptUserForConsent(Uri.parse(url));
-        if (result is Future) {
-          unawaited(result);
-        }
-      },
-      baseClient: _baseClient,
-    );
+    _authorizedClient = await auth.clientViaUserConsent(clientId, _scopes, (url) {
+      final result = _promptUserForConsent(Uri.parse(url));
+      if (result is Future) {
+        unawaited(result);
+      }
+    }, baseClient: _baseClient);
 
     return _authorizedClient!;
   }
@@ -183,10 +170,7 @@ class GoogleDriveRepository {
       ..putIfAbsent('prompt', () => 'consent');
     final authUri = uri.replace(queryParameters: augmentedParams);
 
-    final launched = await launchUrl(
-      authUri,
-      mode: LaunchMode.externalApplication,
-    );
+    final launched = await launchUrl(authUri, mode: LaunchMode.externalApplication);
 
     if (!launched) {
       throw StateError('Unable to open Google authorization screen.');

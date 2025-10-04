@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'create_screen_state.freezed.dart';
 
 @freezed
-class CreateScreenState with _$CreateScreenState {
+abstract class CreateScreenState with _$CreateScreenState {
   const factory CreateScreenState({
     @Default('') String prompt,
     @Default(false) bool isSubmitting,
