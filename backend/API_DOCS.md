@@ -17,9 +17,16 @@ Backend API для аналізу відеокреативів конкурен�
 {
   "url": "https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=UA&media_type=video&q=...",
   "max_results": 15,
-  "fetch_all_details": true
+  "fetch_all_details": true,
+  "auto_analyze": true
 }
 ```
+
+**Parameters:**
+- `url` (required): Facebook Ads Library URL
+- `max_results` (default: 15): Maximum number of ads to extract (1-100)
+- `fetch_all_details` (default: true): Fetch full creative details
+- `auto_analyze` (default: true): **Automatically start video analysis after parsing**
 
 **Response:**
 ```json
@@ -31,7 +38,9 @@ Backend API для аналізу відеокреативів конкурен�
 }
 ```
 
-**Status Flow:** `pending` → `parsing` → `parsed` / `failed`
+**Status Flow:**
+- With `auto_analyze=true` (default): `pending` → `parsing` → `parsed` → `analyzing` → `completed` / `failed`
+- With `auto_analyze=false`: `pending` → `parsing` → `parsed` / `failed`
 
 ---
 
@@ -120,13 +129,14 @@ GET /api/v1/tasks?skip=0&limit=20&status=parsed
         "style": "UGC",
         "effects": ["jump cuts", "zooms"]
       },
-      "hooks": ["хук1", "хук2"],
+      "hooks": ["хуи1", "хуи2"],
       "core_idea": "...",
       "theme": "...",
       "message": "...",
       "recommendations": "...",
       "video_prompt": "..."
     },
+    "html_report": "<html>...</html>",
     "created_at": "...",
     "updated_at": "..."
   }

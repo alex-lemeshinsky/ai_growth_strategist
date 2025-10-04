@@ -1,0 +1,534 @@
+
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Policy Compliance Report - FACEBOOK</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+        
+        .status-banner {
+            background: #ef4444;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .metrics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .metric {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #ef4444;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px;
+        }
+        
+        .section {
+            margin: 30px 0;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 20px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .violation {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+        }
+        
+        .violation-header {
+            font-weight: bold;
+            color: #dc2626;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge-critical { background: #fee2e2; color: #dc2626; }
+        .badge-high { background: #fed7aa; color: #ea580c; }
+        .badge-medium { background: #fef3c7; color: #d97706; }
+        .badge-low { background: #dbeafe; color: #2563eb; }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .info-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+        
+        .info-card h4 {
+            font-size: 14px;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+        
+        .info-card p {
+            font-size: 13px;
+            color: #555;
+        }
+        
+        .check-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 6px;
+        }
+        
+        .check-pass { border-left: 3px solid #10b981; }
+        .check-fail { border-left: 3px solid #ef4444; }
+        
+        .check-icon {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .video-container {
+            margin: 20px 0;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        video {
+            width: 100%;
+            max-height: 500px;
+            display: block;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+        
+        .success-box {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+        
+        .action-items {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .action-items h3 {
+            color: #374151;
+            margin-bottom: 12px;
+        }
+        
+        .action-items ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .action-items li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .action-items li:before {
+            content: "→";
+            margin-right: 10px;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .collapsible {
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .collapsible:after {
+            content: " ▼";
+            font-size: 12px;
+            margin-left: 5px;
+        }
+        
+        .collapsible.active:after {
+            content: " ▲";
+        }
+        
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .collapsible-content.active {
+            max-height: 2000px;
+        }
+        
+        @media (max-width: 768px) {
+            .metrics {
+                flex-direction: column;
+            }
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Detailed Policy Compliance Report</h1>
+            <p><strong>Platform:</strong> FACEBOOK</p>
+            <p><strong>Analyzed:</strong> 04.10.2025 22:38</p>
+        </div>
+        
+        <div class="status-banner">
+            ❌ MODERATION STATUS: FAIL
+        </div>
+        
+        <div class="content">
+
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-label">Risk Level</div>
+                    <div class="metric-value" style="color: #ef4444">HIGH</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Confidence</div>
+                    <div class="metric-value">75%</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Violations Found</div>
+                    <div class="metric-value">3</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Approval Probability</div>
+                    <div class="metric-value">60-70%</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">🎥 Video</h2>
+                <div class="video-container">
+                    <video controls preload="metadata">
+                        <source src="https://example.com/test_video.mp4" type="video/mp4">
+                        Your browser does not support video.
+                    </video>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">⚠️ Risk Summary</h2>
+
+                <div class="warning-box">
+                    <h3 style="color: #dc2626; margin-bottom: 10px;">🚫 Critical Blockers:</h3>
+                    <ul>
+                        <li>Health claims without proper disclaimers</li>
+                    </ul>
+                </div>
+
+                <div class="warning-box" style="background: #fef3c7;">
+                    <h3 style="color: #d97706; margin-bottom: 10px;">⚡ Medium Risks:</h3>
+                    <ul>
+                        <li>Personal attributes targeting in text overlay</li>
+                    </ul>
+                </div>
+
+                <div class="info-card">
+                    <h4>ℹ️ Low Risks:</h4>
+                    <ul style="margin-left: 20px; margin-top: 8px;">
+                        <li>Text overlay percentage slightly high (15%) - recommend keeping under 20%</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">⛔ Policy Violations (3)</h2>
+
+                <div class="violation">
+                    <div class="violation-header">
+                        <span class="badge badge-medium">medium</span>
+                        <span>#1 Personal Attributes</span>
+                    </div>
+                    <p><strong>Policy Section:</strong> Advertising Policies - Personal Attributes</p>
+                    <p><strong>Description:</strong> Text may imply stress level targeting</p>
+                    <p><strong>Timestamp:</strong> 1.5s - Text overlay says 'Stressed at work?'</p>
+                    <p><strong>Why it's a violation:</strong> Directly addresses viewer's emotional state which may be considered targeting personal attributes</p>
+                    <p style="color: #059669; margin-top: 10px;"><strong>💡 Recommendation:</strong> Change to more general phrasing like 'Need a break?' or 'Looking for calm?'</p>
+                    <p style="color: #0891b2;"><strong>🔄 Alternative:</strong> Focus on solution benefits rather than problem identification</p>
+                </div>
+
+                <div class="violation">
+                    <div class="violation-header">
+                        <span class="badge badge-high">high</span>
+                        <span>#2 Health Claims</span>
+                    </div>
+                    <p><strong>Policy Section:</strong> Advertising Policies - Health</p>
+                    <p><strong>Description:</strong> Before/after imagery detected</p>
+                    <p><strong>Timestamp:</strong> 8.5s - Shows transformation from stressed to relaxed</p>
+                    <p><strong>Why it's a violation:</strong> May be interpreted as health claim without proper disclaimers</p>
+                    <p style="color: #059669; margin-top: 10px;"><strong>💡 Recommendation:</strong> Remove before/after visual metaphor or add medical disclaimer</p>
+                    <p style="color: #0891b2;"><strong>🔄 Alternative:</strong> Show product benefits without transformation imagery</p>
+                </div>
+
+                <div class="violation">
+                    <div class="violation-header">
+                        <span class="badge badge-low">low</span>
+                        <span>#3 Text Overlay</span>
+                    </div>
+                    <p><strong>Policy Section:</strong> Best Practices</p>
+                    <p><strong>Description:</strong> Text overlay slightly above recommended 20%</p>
+                    
+                    <p><strong>Why it's a violation:</strong> May reduce reach due to high text ratio</p>
+                    <p style="color: #059669; margin-top: 10px;"><strong>💡 Recommendation:</strong> Reduce text amount or spread across frames</p>
+                    <p style="color: #0891b2;"><strong>🔄 Alternative:</strong> Use voiceover instead of on-screen text</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">🔞 NSFW & Safety Check</h2>
+                <div class="info-grid">
+                    <div class="check-item check-pass">
+                        <span class="check-icon">✅</span>
+                        <span>Safe for Work: Yes</span>
+                    </div>
+                    <div class="check-item check-pass">
+                        <span class="check-icon">✅</span>
+                        <span>Family Friendly: Yes</span>
+                    </div>
+                    <div class="check-item check-pass">
+                        <span class="check-icon">✅</span>
+                        <span>Age 13+ Appropriate: Yes</span>
+                    </div>
+                </div>
+                
+                
+            </div>
+
+            <div class="section">
+                <h2 class="section-title collapsible">🚫 Prohibited Content Checks</h2>
+                <div class="collapsible-content">
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">🏥 Health & Medical Claims</h2>
+                <div class="check-item check-fail"><span class="check-icon">❌</span><span>Before/After Imagery <span class="badge badge-critical">critical</span></span></div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title collapsible">🏷️ Brands & Trademarks</h2>
+                <div class="collapsible-content">
+                    <h3>Detected Brands:</h3>
+
+                    <div class="check-item check-pass">
+                        <span class="check-icon">✅</span>
+                        <span><strong>CalmMind App</strong> (logo) - 3.0s - власний</span>
+                    </div>
+                    <div class="warning-box"><strong>Trademark Issues:</strong> немає проблем</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">🎵 Audio & Copyright</h2>
+
+                <div class="info-card" style="border-left-color: #10b981;">
+                    <h4>Copyright Risk: LOW</h4>
+                    <p><strong>Music Recognition:</strong> royalty-free ambient track</p>
+                    <p><strong>Copyrighted Music:</strong> No</p>
+                    <p><strong>Offensive Language:</strong> No</p>
+                    
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">⚙️ Technical Quality</h2>
+                <div class="info-grid">
+
+                    <div class="check-item check-pass">
+                        <span class="check-icon">✅</span>
+                        <span>Resolution Adequate: Yes</span>
+                    </div>
+
+                    <div class="check-item check-pass">
+                        <span class="check-icon">✅</span>
+                        <span>Flashing Effects (Epilepsy Risk): No</span>
+                    </div>
+
+                    <div class="info-card">
+                        <h4>Text Overlay</h4>
+                        <p>approximately 15% (Recommended: &lt;20%)</p>
+                    </div>
+
+                    <div class="info-card">
+                        <h4>Viewing Comfort</h4>
+                        <p>комфортно</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">✏️ Action Items</h2>
+                <div class="action-items">
+                    <h3 style="color: #dc2626;">🚨 Immediate Blockers (Must Fix):</h3>
+                    <ul>
+                        <li>Modify opening text to avoid personal attributes targeting</li>
+                    </ul>
+                    <h3 style="color: #ea580c; margin-top: 15px;">📈 Recommended Improvements:</h3>
+                    <ul>
+                        <li>Reduce text overlay percentage slightly</li>
+                        <li>Add captions for better accessibility</li>
+                    </ul>
+                    <h3 style="color: #059669; margin-top: 15px;">💡 Optional Enhancements:</h3>
+                    <ul>
+                        <li>Consider adding customer testimonial without health claims</li>
+                        <li>Test different hook variations</li>
+                    </ul>
+
+                    <div style="margin-top: 20px; padding: 15px; background: #f59e0b22; border-left: 4px solid #f59e0b; border-radius: 6px;">
+                        <strong>Resubmission Readiness:</strong> потребує змін
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">💡 Feedback & Recommendations</h2>
+                <h3>Main Issues:</h3>
+
+                <div class="warning-box">
+                    <span class="badge badge-medium">medium</span>
+                    <span class="badge badge-critical">MUST FIX</span>
+                    <p>Personal attributes targeting detected in opening text</p>
+                </div>
+                <h3 style="margin-top: 20px;">Required Changes:</h3>
+
+                <div class="info-card">
+                    <span class="badge badge-high">high</span>
+                    <p><strong>Change:</strong> Modify opening text from 'Stressed at work?' to more general phrasing</p>
+                    <p><strong>How to fix:</strong> Replace with 'Need a moment of calm?' or 'Looking for peace?' which focuses on solution rather than problem</p>
+                </div>
+                <h3 style="margin-top: 20px;">Recommendations:</h3>
+                <ul>
+                    <li>Keep text overlay under 20% for better reach</li>
+                    <li>Consider adding captions for accessibility</li>
+                    <li>Strong UGC style works well for this category</li>
+                </ul>
+                <h3 style="margin-top: 20px;">Alternative Approaches:</h3>
+                <ul>
+                    <li>Start with solution/benefit first ('5 minutes to calm') rather than problem identification</li>
+                    <li>Use visual storytelling without direct questioning of viewer's state</li>
+                </ul>
+
+                <div class="success-box" style="margin-top: 20px;">
+                    <h3 style="color: #059669;">✅ Best Practices:</h3>
+                    <ul>
+                        <li>Clear product demonstration</li>
+                        <li>Appropriate length (15 seconds)</li>
+                        <li>Family-friendly content</li>
+                        <li>Good production quality</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">📝 Overall Assessment</h2>
+                <p style="font-size: 16px; line-height: 1.8;">Video has good production quality and clear messaging. Main concern is potential personal attributes targeting with 'Stressed at work?' text. Recommend rephrasing to avoid direct reference to viewer's emotional state. Otherwise content is clean and appropriate.</p>
+            </div>
+
+        </div>
+    </div>
+    
+    <script>
+        // Collapsible sections
+        document.querySelectorAll('.collapsible').forEach(function(element) {
+            element.addEventListener('click', function() {
+                this.classList.toggle('active');
+                var content = this.nextElementSibling;
+                content.classList.toggle('active');
+            });
+        });
+    </script>
+</body>
+</html>
