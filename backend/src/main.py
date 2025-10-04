@@ -91,7 +91,7 @@ async def shutdown_event():
     
     # Close MongoDB connection
     try:
-        await MongoDB.disconnect()
+        await MongoDB.close()
         logger.info("✅ MongoDB disconnected successfully")
     except Exception as e:
         logger.error(f"❌ Error disconnecting MongoDB: {e}")
