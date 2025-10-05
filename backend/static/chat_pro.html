@@ -712,7 +712,21 @@
         // Load session by ID
         async function loadSession(sessionId) {
             currentSessionId = sessionId;
-            sessionInfo.textContent = `Session: ${sessionId.substring(0, 8)}...`;
+            
+            try {
+                const response = await fetch(`${API_BASE}/session/${sessionId}`);
+                if (!response.ok) throw new Error('Failed to load session');
+                const sessionData = await response.json();
+                
+                // Show session info with task link if available
+                let sessionText = `Session: ${sessionId.substring(0, 8)}...`;
+                if (sessionData.state.task_id) {
+                    sessionText += ` 📊 (linked to analysis)`;
+                }
+                sessionInfo.textContent = sessionText;
+            } catch (error) {
+                sessionInfo.textContent = `Session: ${sessionId.substring(0, 8)}...`;
+            }
 
             // Enable input
             messageInput.disabled = false;
