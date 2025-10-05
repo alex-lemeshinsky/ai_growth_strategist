@@ -18,10 +18,7 @@ class CheckScreenNotifier extends Notifier<CheckScreenState> {
   final GoogleDriveRepository _repository = GoogleDriveRepository();
 
   @override
-  CheckScreenState build() {
-    Future.microtask(_loadDriveFiles);
-    return const CheckScreenState();
-  }
+  CheckScreenState build() => const CheckScreenState();
 
   void setSegment(CheckSegment segment) {
     if (state.segment == segment) {
@@ -86,9 +83,45 @@ class CheckScreenNotifier extends Notifier<CheckScreenState> {
     }
   }
 
-  Future<void> refreshDriveFiles() => _loadDriveFiles(force: true);
+  Future<void> connectDrive() async {
+    if (state.isLoadingFiles) {
+      return;
+    }
+    state = state.copyWith(isLoadingFiles: true, driveError: null);
+    try {
+      final files = await _repository.listAllFilesInFolder(folderId: _folderId);
+      state = state.copyWith(
+        isLoadingFiles: false,
+        driveFiles: files,
+        hasDriveAccess: true,
+        driveError: null,
+      );
+    } catch (error) {
+      state = state.copyWith(
+        isLoadingFiles: false,
+        hasDriveAccess: false,
+        driveError:
+            'Failed to connect to Google Drive. Please try again. (${error.toString()})',
+      );
+    }
+  }
+
+  Future<void> refreshDriveFiles() async {
+    if (!state.hasDriveAccess) {
+      await connectDrive();
+    } else {
+      await _loadDriveFiles(force: true);
+    }
+  }
 
   Future<void> _loadDriveFiles({bool force = false}) async {
+    if (!state.hasDriveAccess) {
+      if (force) {
+        await connectDrive();
+      }
+      return;
+    }
+
     if (state.isLoadingFiles && !force) {
       return;
     }
@@ -100,10 +133,12 @@ class CheckScreenNotifier extends Notifier<CheckScreenState> {
       state = state.copyWith(
         isLoadingFiles: false,
         driveFiles: files,
+        hasDriveAccess: true,
       );
     } catch (error) {
       state = state.copyWith(
         isLoadingFiles: false,
+        hasDriveAccess: false,
         driveError:
             'Failed to load your Google Drive files. Please try again. (${error.toString()})',
       );

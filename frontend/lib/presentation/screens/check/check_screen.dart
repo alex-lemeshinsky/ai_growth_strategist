@@ -85,11 +85,18 @@ class CheckScreen extends ConsumerWidget {
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               child: state.segment == CheckSegment.myVideos
-                  ? _MyVideosView(
-                      key: const ValueKey('drive-view'),
-                      state: state,
-                      onRefresh: notifier.refreshDriveFiles,
-                    )
+                  ? state.hasDriveAccess
+                        ? _MyVideosView(
+                            key: const ValueKey('drive-view'),
+                            state: state,
+                            onRefresh: notifier.refreshDriveFiles,
+                          )
+                        : _DriveConnectPrompt(
+                            key: const ValueKey('drive-connect'),
+                            isLoading: state.isLoadingFiles,
+                            error: state.driveError,
+                            onConnect: notifier.connectDrive,
+                          )
                   : const UploadVideoForm(),
             ),
           ),
@@ -178,6 +185,69 @@ class _EmptyDrivePlaceholder extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DriveConnectPrompt extends StatelessWidget {
+  const _DriveConnectPrompt({
+    super.key,
+    required this.isLoading,
+    required this.onConnect,
+    this.error,
+  });
+
+  final bool isLoading;
+  final VoidCallback onConnect;
+  final String? error;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_sync_outlined, size: 48, color: theme.colorScheme.primary),
+            const SizedBox(height: 16),
+            Text(
+              'Connec Google Drive',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'All your generated videos will be stored in Google Drive.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: isLoading ? null : onConnect,
+              icon: isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.lock_open_rounded),
+              label: const Text('Connect Google Drive'),
+            ),
+            if (error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                error!,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
