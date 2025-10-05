@@ -1,15 +1,33 @@
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../controllers/check/check_screen_notifier.dart';
 import '../../controllers/check/check_screen_state.dart';
 
-class CheckScreen extends ConsumerWidget {
+class CheckScreen extends ConsumerStatefulWidget {
   const CheckScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CheckScreen> createState() => _CheckScreenState();
+}
+
+class _CheckScreenState extends ConsumerState<CheckScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ref.read(checkScreenProvider.notifier).loadPolicyTasks();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final state = ref.watch(checkScreenProvider);
     final notifier = ref.read(checkScreenProvider.notifier);
@@ -40,6 +58,11 @@ class CheckScreen extends ConsumerWidget {
                         label: Text('Upload video'),
                         icon: Icon(Icons.cloud_upload_outlined),
                       ),
+                      ButtonSegment(
+                        value: CheckSegment.policyReports,
+                        label: Text('Policy reports'),
+                        icon: Icon(Icons.policy_outlined),
+                      ),
                     ],
                     showSelectedIcon: false,
                     selected: {state.segment},
@@ -66,38 +89,58 @@ class CheckScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              OutlinedButton.icon(
-                onPressed: state.isLoadingFiles ? null : () => notifier.refreshDriveFiles(),
-                icon: state.isLoadingFiles
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.refresh),
-                label: const Text('Refresh'),
-              ),
+              if (state.segment == CheckSegment.myVideos) ...[
+                const SizedBox(width: 12),
+                OutlinedButton.icon(
+                  onPressed: state.isLoadingFiles ? null : () => notifier.refreshDriveFiles(),
+                  icon: state.isLoadingFiles
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh),
+                  label: const Text('Refresh'),
+                ),
+              ] else if (state.segment == CheckSegment.policyReports) ...[
+                const SizedBox(width: 12),
+                OutlinedButton.icon(
+                  onPressed: state.isLoadingPolicyTasks
+                      ? null
+                      : () => notifier.loadPolicyTasks(force: true),
+                  icon: state.isLoadingPolicyTasks
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh),
+                  label: const Text('Refresh'),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 32),
           Expanded(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
-              child: state.segment == CheckSegment.myVideos
-                  ? state.hasDriveAccess
-                        ? _MyVideosView(
-                            key: const ValueKey('drive-view'),
-                            state: state,
-                            onRefresh: notifier.refreshDriveFiles,
-                          )
-                        : _DriveConnectPrompt(
-                            key: const ValueKey('drive-connect'),
-                            isLoading: state.isLoadingFiles,
-                            error: state.driveError,
-                            onConnect: notifier.connectDrive,
-                          )
-                  : const UploadVideoForm(),
+              child: switch (state.segment) {
+                CheckSegment.myVideos =>
+                  state.hasDriveAccess
+                      ? _MyVideosView(
+                          key: const ValueKey('drive-view'),
+                          state: state,
+                          onRefresh: notifier.refreshDriveFiles,
+                        )
+                      : _DriveConnectPrompt(
+                          key: const ValueKey('drive-connect'),
+                          isLoading: state.isLoadingFiles,
+                          error: state.driveError,
+                          onConnect: notifier.connectDrive,
+                        ),
+                CheckSegment.uploadVideo => const UploadVideoForm(),
+                CheckSegment.policyReports => const _PolicyReportsView(),
+              },
             ),
           ),
         ],
@@ -186,6 +229,117 @@ class _EmptyDrivePlaceholder extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _PolicyReportsView extends ConsumerWidget {
+  const _PolicyReportsView();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(checkScreenProvider);
+    final notifier = ref.read(checkScreenProvider.notifier);
+    final theme = Theme.of(context);
+    final baseUrl = dotenv.get('BASE_URL');
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Text('Policy Report History', style: theme.textTheme.titleMedium),
+                const Spacer(),
+                IconButton(
+                  tooltip: 'Refresh',
+                  onPressed: state.isLoadingPolicyTasks
+                      ? null
+                      : () => notifier.loadPolicyTasks(force: true),
+                  icon: state.isLoadingPolicyTasks
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.refresh),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (state.policyTasksError != null)
+              _PolicyTasksError(
+                message: state.policyTasksError!,
+                onRetry: () => notifier.loadPolicyTasks(force: true),
+              )
+            else if (state.isLoadingPolicyTasks)
+              const Center(child: CircularProgressIndicator())
+            else if (state.policyTasks.isEmpty)
+              Text(
+                'No policy reports yet. Completed policy checks will appear here.',
+                style: theme.textTheme.bodySmall,
+              )
+            else
+              Expanded(
+                child: ListView.separated(
+                  itemCount: state.policyTasks.length,
+                  itemBuilder: (context, index) {
+                    final task = state.policyTasks[index];
+                    final title = (task.pageName?.trim().isNotEmpty ?? false)
+                        ? task.pageName!.trim()
+                        : 'Task ${task.taskId}';
+                    final reportUrl = '$baseUrl/report/policy/${task.taskId}';
+
+                    return ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      subtitle: Text(task.status, style: theme.textTheme.bodySmall),
+                      trailing: const Icon(Icons.open_in_new),
+                      onTap: () => _openPolicyReport(context, reportUrl),
+                    );
+                  },
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openPolicyReport(BuildContext context, String url) async {
+    final uri = Uri.parse(url);
+    final messenger = ScaffoldMessenger.of(context);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      messenger.showSnackBar(SnackBar(content: Text('Unable to open report URL: $url')));
+    }
+  }
+}
+
+class _PolicyTasksError extends StatelessWidget {
+  const _PolicyTasksError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(message, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error)),
+        const SizedBox(height: 8),
+        TextButton.icon(
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Try again'),
+        ),
+      ],
     );
   }
 }

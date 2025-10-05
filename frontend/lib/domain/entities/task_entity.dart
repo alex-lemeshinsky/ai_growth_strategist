@@ -8,7 +8,6 @@ abstract class TaskEntity with _$TaskEntity {
   @JsonSerializable(fieldRename: FieldRename.snake)
   const factory TaskEntity({
     required String taskId,
-    required String url,
     required String status,
     String? pageName,
     String? pageId,

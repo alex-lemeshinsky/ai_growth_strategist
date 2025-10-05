@@ -5,10 +5,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/repository/google_drive_repository.dart';
+import '../../../data/repository/remote_repository.dart';
 import 'check_screen_state.dart';
 
-final checkScreenProvider =
-    NotifierProvider<CheckScreenNotifier, CheckScreenState>(
+final checkScreenProvider = NotifierProvider<CheckScreenNotifier, CheckScreenState>(
   CheckScreenNotifier.new,
 );
 
@@ -16,19 +16,25 @@ class CheckScreenNotifier extends Notifier<CheckScreenState> {
   static const _folderId = '11rTyyKmSJKhC7QvH1RnmjxagFlw56I9F';
 
   final GoogleDriveRepository _repository = GoogleDriveRepository();
+  late final RemoteRepository _remoteRepository;
 
   @override
-  CheckScreenState build() => const CheckScreenState();
+  CheckScreenState build() {
+    _remoteRepository = ref.read(remoteRepositoryProvider);
+    return const CheckScreenState();
+  }
 
   void setSegment(CheckSegment segment) {
     if (state.segment == segment) {
       return;
     }
     state = state.copyWith(segment: segment);
-    if (segment == CheckSegment.myVideos &&
-        state.driveFiles.isEmpty &&
-        !state.isLoadingFiles) {
+    if (segment == CheckSegment.myVideos && state.driveFiles.isEmpty && !state.isLoadingFiles) {
       unawaited(_loadDriveFiles());
+    } else if (segment == CheckSegment.policyReports &&
+        state.policyTasks.isEmpty &&
+        !state.isLoadingPolicyTasks) {
+      unawaited(loadPolicyTasks());
     }
   }
 
@@ -40,11 +46,7 @@ class CheckScreenNotifier extends Notifier<CheckScreenState> {
   }
 
   void clearSelection() {
-    state = state.copyWith(
-      selectedVideoName: null,
-      selectedVideoSize: null,
-      errorMessage: null,
-    );
+    state = state.copyWith(selectedVideoName: null, selectedVideoSize: null, errorMessage: null);
   }
 
   void registerVideo({required String name, int? sizeInBytes}) {
@@ -100,8 +102,7 @@ class CheckScreenNotifier extends Notifier<CheckScreenState> {
       state = state.copyWith(
         isLoadingFiles: false,
         hasDriveAccess: false,
-        driveError:
-            'Failed to connect to Google Drive. Please try again. (${error.toString()})',
+        driveError: 'Failed to connect to Google Drive. Please try again. (${error.toString()})',
       );
     }
   }
@@ -130,11 +131,7 @@ class CheckScreenNotifier extends Notifier<CheckScreenState> {
 
     try {
       final files = await _repository.listAllFilesInFolder(folderId: _folderId);
-      state = state.copyWith(
-        isLoadingFiles: false,
-        driveFiles: files,
-        hasDriveAccess: true,
-      );
+      state = state.copyWith(isLoadingFiles: false, driveFiles: files, hasDriveAccess: true);
     } catch (error) {
       state = state.copyWith(
         isLoadingFiles: false,
@@ -142,6 +139,21 @@ class CheckScreenNotifier extends Notifier<CheckScreenState> {
         driveError:
             'Failed to load your Google Drive files. Please try again. (${error.toString()})',
       );
+    }
+  }
+
+  Future<void> loadPolicyTasks({bool force = false}) async {
+    if (state.isLoadingPolicyTasks && !force) {
+      return;
+    }
+
+    state = state.copyWith(isLoadingPolicyTasks: true, policyTasksError: null);
+
+    try {
+      final tasks = await _remoteRepository.listCompletedPolicyTasks();
+      state = state.copyWith(isLoadingPolicyTasks: false, policyTasks: tasks);
+    } catch (error) {
+      state = state.copyWith(isLoadingPolicyTasks: false, policyTasksError: error.toString());
     }
   }
 }

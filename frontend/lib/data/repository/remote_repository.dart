@@ -70,10 +70,7 @@ class RemoteRepository {
   }
 
   Map<String, String> _headers([Map<String, String>? overrides]) {
-    return {
-      _ngrokHeaderKey: _ngrokHeaderValue,
-      if (overrides != null) ...overrides,
-    };
+    return {_ngrokHeaderKey: _ngrokHeaderValue, if (overrides != null) ...overrides};
   }
 
   Future<String> generateVideo(GenerateVideoRequestModel payload) async {
@@ -94,13 +91,33 @@ class RemoteRepository {
       query['status'] = status;
     }
     final uri = _resolve('/api/v1/tasks', query);
-    final decoded = _decodeOrThrow(
-      uri,
-      await _client.get(uri, headers: _headers()),
-    );
+    final decoded = _decodeOrThrow(uri, await _client.get(uri, headers: _headers()));
 
     if (decoded['tasks'] is List) {
       return decoded['tasks'] as List<dynamic>;
+    }
+    return const [];
+  }
+
+  Future<List<dynamic>> listPolicyTasks({
+    int skip = 0,
+    int limit = 20,
+    String? status,
+    String? platform,
+  }) async {
+    final query = <String, dynamic>{'skip': skip, 'limit': limit};
+    if (status != null && status.isNotEmpty) {
+      query['status'] = status;
+    }
+    if (platform != null && platform.isNotEmpty) {
+      query['platform'] = platform;
+    }
+    final uri = _resolve('/api/v1/policy/tasks', query);
+    final decoded = _decodeOrThrow(uri, await _client.get(uri, headers: _headers()));
+
+    final tasks = decoded['tasks'];
+    if (tasks is List) {
+      return tasks;
     }
     return const [];
   }
@@ -118,6 +135,11 @@ class RemoteRepository {
 
   Future<List<TaskEntity>> listCompletedTasks() async {
     final raw = await listTasks(status: 'COMPLETED');
+    return raw.whereType<Map<String, dynamic>>().map(TaskEntity.fromJson).toList(growable: false);
+  }
+
+  Future<List<TaskEntity>> listCompletedPolicyTasks({String? platform}) async {
+    final raw = await listPolicyTasks(status: 'COMPLETED', platform: platform);
     return raw.whereType<Map<String, dynamic>>().map(TaskEntity.fromJson).toList(growable: false);
   }
 
