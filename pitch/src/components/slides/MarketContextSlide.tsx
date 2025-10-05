@@ -23,7 +23,7 @@ export const MarketContextSlide = () => (
       </div>
     </div>
     <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl p-8 border border-blue-400/30 mt-8">
-      <h3 className="text-3xl font-bold text-white mb-4">Чому це важливо для нас?</h3>
+      <h3 className="text-3xl font-bold text-white mb-4">Чому це важливо для вас?</h3>
       <div className="grid grid-cols-2 gap-6 text-lg text-gray-300">
         <div>
           <Target className="w-8 h-8 text-blue-400 mb-2" />

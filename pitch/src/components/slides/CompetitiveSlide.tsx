@@ -9,8 +9,8 @@ export const CompetitiveSlide = () => (
           <tr className="border-b border-white/20">
             <th className="pb-4 text-xl text-gray-400">Функція</th>
             <th className="pb-4 text-xl text-center text-gray-400">AdCreative.ai</th>
-            <th className="pb-4 text-xl text-center text-gray-400">Pencil</th>
-            <th className="pb-4 text-xl text-center text-green-400">AI Growth Strategist</th>
+            <th className="pb-4 text-xl text-center text-gray-400">Runway Gen-3</th>
+            <th className="pb-4 text-xl text-center text-green-400">CreatorFlow AI</th>
           </tr>
         </thead>
         <tbody className="text-lg">
@@ -21,28 +21,28 @@ export const CompetitiveSlide = () => (
             <td className="py-4 text-center text-green-400 font-bold">✓</td>
           </tr>
           <tr className="border-b border-white/10">
-            <td className="py-4 text-white">Патерни з реальних ads</td>
-            <td className="py-4 text-center text-red-400">✗</td>
-            <td className="py-4 text-center text-yellow-400">~</td>
-            <td className="py-4 text-center text-green-400 font-bold">✓</td>
-          </tr>
-          <tr className="border-b border-white/10">
-            <td className="py-4 text-white">Policy Checker</td>
-            <td className="py-4 text-center text-red-400">✗</td>
-            <td className="py-4 text-center text-yellow-400">Basic</td>
-            <td className="py-4 text-center text-green-400 font-bold">Advanced</td>
-          </tr>
-          <tr className="border-b border-white/10">
-            <td className="py-4 text-white">Auto Fix-it</td>
+            <td className="py-4 text-white">Паттерн майнинг з реальних ads</td>
             <td className="py-4 text-center text-red-400">✗</td>
             <td className="py-4 text-center text-red-400">✗</td>
             <td className="py-4 text-center text-green-400 font-bold">✓</td>
           </tr>
           <tr className="border-b border-white/10">
-            <td className="py-4 text-white">Deep Analysis</td>
-            <td className="py-4 text-center text-yellow-400">Basic</td>
-            <td className="py-4 text-center text-yellow-400">Basic</td>
-            <td className="py-4 text-center text-green-400 font-bold">Advanced</td>
+            <td className="py-4 text-white">Conversational brief collection</td>
+            <td className="py-4 text-center text-red-400">✗</td>
+            <td className="py-4 text-center text-red-400">✗</td>
+            <td className="py-4 text-center text-green-400 font-bold">✓</td>
+          </tr>
+          <tr className="border-b border-white/10">
+            <td className="py-4 text-white">Policy Checker + Recommendations</td>
+            <td className="py-4 text-center text-red-400">✗</td>
+            <td className="py-4 text-center text-red-400">✗</td>
+            <td className="py-4 text-center text-green-400 font-bold">✓</td>
+          </tr>
+          <tr className="border-b border-white/10">
+            <td className="py-4 text-white">End-to-end automation</td>
+            <td className="py-4 text-center text-yellow-400">Partial</td>
+            <td className="py-4 text-center text-yellow-400">Manual</td>
+            <td className="py-4 text-center text-green-400 font-bold">Full</td>
           </tr>
           <tr>
             <td className="py-4 text-white">Platform optimization</td>
@@ -55,7 +55,7 @@ export const CompetitiveSlide = () => (
     </div>
     <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-xl p-6 border border-green-400/30">
       <p className="text-xl text-white font-semibold">
-        Наша перевага: Повний end-to-end цикл від pattern mining до policy-safe креативів
+        Наша перевага: Єдиний повноцінний end-to-end workflow — від аналізу конкурентів до policy-safe креативів
       </p>
     </div>
   </div>

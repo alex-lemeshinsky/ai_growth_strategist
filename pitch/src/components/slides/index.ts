@@ -8,6 +8,7 @@ export { ValueSlide, valueSlideConfig } from './ValueSlide';
 export { AdvantagesSlide, advantagesSlideConfig } from './AdvantagesSlide';
 export { StatusSlide, statusSlideConfig } from './StatusSlide';
 export { DemoFlowSlide, demoFlowSlideConfig } from './DemoFlowSlide';
+export { LiveDemoSlide, liveDemoSlideConfig } from './LiveDemoSlide';
 export { MarketContextSlide, marketContextSlideConfig } from './MarketContextSlide';
 export { RoadmapSlide, roadmapSlideConfig } from './RoadmapSlide';
 export { CompetitiveSlide, competitiveSlideConfig } from './CompetitiveSlide';

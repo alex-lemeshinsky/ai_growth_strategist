@@ -6,9 +6,16 @@ export const DemoFlowSlide = () => (
     <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-violet-400/30">
       <div className="space-y-6">
         <div className="flex items-center gap-4">
+          <div className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full w-16 h-16 flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">0</div>
+          <div className="flex-1">
+            <h3 className="text-2xl font-semibold text-white">Аналіз конкурентів</h3>
+            <p className="text-gray-300 text-lg">Парсимо Meta Ad Library, видобуваємо паттерни з реальних оголошень</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
           <div className="bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full w-16 h-16 flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">1</div>
           <div className="flex-1">
-            <h3 className="text-2xl font-semibold text-white">Діалог з системою</h3>
+            <h3 className="text-2xl font-semibold text-white">Інтелектуальний діалог</h3>
             <p className="text-gray-300 text-lg">"Хочу рекламувати фітнес-додаток для зайнятих професіоналів"</p>
           </div>
         </div>
@@ -34,8 +41,8 @@ export const DemoFlowSlide = () => (
         <div className="flex items-center gap-4 mt-6">
           <div className="bg-gradient-to-br from-green-500 to-emerald-500 rounded-full w-16 h-16 flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">4</div>
           <div className="flex-1">
-            <h3 className="text-2xl font-semibold text-white">Результат</h3>
-            <p className="text-gray-300 text-lg">ZIP-архів з відео, сабами, скриптами + звіт про безпечність</p>
+            <h3 className="text-2xl font-semibold text-white">Пакет креативів</h3>
+            <p className="text-gray-300 text-lg">Готові відео, саби, скрипти + детальний policy-звіт</p>
           </div>
         </div>
       </div>
