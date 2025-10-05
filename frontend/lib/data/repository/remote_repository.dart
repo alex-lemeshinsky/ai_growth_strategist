@@ -21,6 +21,8 @@ class RemoteRepository {
 
   final http.Client _client;
   final Uri _baseUri;
+  static const _ngrokHeaderKey = 'ngrok-skip-browser-warning';
+  static const _ngrokHeaderValue = 'true';
 
   Uri _resolve(String path, [Map<String, dynamic>? query]) {
     final normalized = path.startsWith('/') ? path : '/$path';
@@ -61,10 +63,17 @@ class RemoteRepository {
   Future<Map<String, dynamic>> _postJson(Uri uri, Map<String, dynamic> body) async {
     final response = await _client.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers(const {'Content-Type': 'application/json'}),
       body: jsonEncode(body),
     );
     return _decodeOrThrow(uri, response);
+  }
+
+  Map<String, String> _headers([Map<String, String>? overrides]) {
+    return {
+      _ngrokHeaderKey: _ngrokHeaderValue,
+      if (overrides != null) ...overrides,
+    };
   }
 
   Future<String> generateVideo(GenerateVideoRequestModel payload) async {
@@ -85,7 +94,10 @@ class RemoteRepository {
       query['status'] = status;
     }
     final uri = _resolve('/api/v1/tasks', query);
-    final decoded = _decodeOrThrow(uri, await _client.get(uri));
+    final decoded = _decodeOrThrow(
+      uri,
+      await _client.get(uri, headers: _headers()),
+    );
 
     if (decoded['tasks'] is List) {
       return decoded['tasks'] as List<dynamic>;
@@ -95,7 +107,7 @@ class RemoteRepository {
 
   Future<Map<String, dynamic>> getTask(String taskId) async {
     final uri = _resolve('/api/v1/task/$taskId');
-    final res = _decodeOrThrow(uri, await _client.get(uri));
+    final res = _decodeOrThrow(uri, await _client.get(uri, headers: _headers()));
     return res['task'] ?? res;
   }
 
@@ -116,11 +128,11 @@ class RemoteRepository {
 
   Future<Map<String, dynamic>> healthCheck() async {
     final uri = _resolve('/api/v1/health');
-    return _decodeOrThrow(uri, await _client.get(uri));
+    return _decodeOrThrow(uri, await _client.get(uri, headers: _headers()));
   }
 
   Future<Map<String, dynamic>> root() async {
     final uri = _resolve('/');
-    return _decodeOrThrow(uri, await _client.get(uri));
+    return _decodeOrThrow(uri, await _client.get(uri, headers: _headers()));
   }
 }
