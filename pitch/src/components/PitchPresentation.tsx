@@ -35,6 +35,8 @@ import {
   kpisSlideConfig,
   NextStepsSlide,
   nextStepsSlideConfig,
+  LiveDemoSlide,
+  liveDemoSlideConfig,
   FinalSlide,
   finalSlideConfig,
 } from './slides';
@@ -60,6 +62,7 @@ const PitchPresentation = () => {
     { ...advantagesSlideConfig, content: <AdvantagesSlide /> },
     { ...statusSlideConfig, content: <StatusSlide /> },
     { ...demoFlowSlideConfig, content: <DemoFlowSlide /> },
+    { ...liveDemoSlideConfig, content: <LiveDemoSlide /> },
     { ...marketContextSlideConfig, content: <MarketContextSlide /> },
     { ...roadmapSlideConfig, content: <RoadmapSlide /> },
     { ...competitiveSlideConfig, content: <CompetitiveSlide /> },

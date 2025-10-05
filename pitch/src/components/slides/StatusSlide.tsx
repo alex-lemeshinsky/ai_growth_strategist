@@ -27,6 +27,7 @@ export const StatusSlide = () => (
           <h4 className="text-xl font-semibold text-white mb-2">Step 3: Policy Checker</h4>
           <ul className="space-y-2 text-gray-300">
             <li>• Risk detection</li>
+            <li>• Smart recommendations</li>
             <li>• Action items</li>
             <li>• HTML reports</li>
           </ul>

@@ -3,19 +3,22 @@ import React from 'react';
 export const TitleSlide = () => (
   <div className="text-center space-y-8">
     <div className="text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
-      AI Growth Strategist
+      CreatorFlow AI
     </div>
     <div className="text-3xl text-gray-300 font-light">
       Від брифу до креативів за хвилини, не за тижні
     </div>
-    <div className="text-xl text-gray-400 mt-12">
+    <div className="text-xl text-gray-400 mt-8">
+      Команда <span className="text-blue-400 font-semibold">Creators</span>
+    </div>
+    <div className="text-lg text-gray-500 mt-4">
       Universe Group Hackathon 2025
     </div>
   </div>
 );
 
 export const titleSlideConfig = {
-  title: "AI Growth Strategist",
+  title: "CreatorFlow AI",
   subtitle: "Від брифу до креативів за хвилини, не за тижні",
   bg: "bg-gradient-to-br from-purple-900 via-blue-900 to-black"
 };
