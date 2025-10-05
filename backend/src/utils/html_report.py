@@ -26,6 +26,7 @@ def generate_html_report(
     page_name = task_data.get("page_name", "Unknown")
     total_ads = task_data.get("total_ads", len(creatives))
     analyzed_count = len(creatives)
+    task_id = task_data.get("task_id", "")
     
     html = f"""
 <!DOCTYPE html>
@@ -321,6 +322,166 @@ def generate_html_report(
             background: #000;
         }}
         
+        /* Strategy Section Styles */
+        .strategy-section {{
+            margin: 20px 0;
+        }}
+        
+        .strategy-grid {{
+            display: grid;
+            gap: 15px;
+            margin: 15px 0;
+        }}
+        
+        .strategy-item {{
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }}
+        
+        .strategy-item:hover {{
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }}
+        
+        .strategy-header {{
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }}
+        
+        .strategy-icon {{
+            font-size: 18px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.1);
+        }}
+        
+        .strategy-label {{
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }}
+        
+        .strategy-content {{
+            font-size: 14px;
+            line-height: 1.6;
+            color: #555;
+        }}
+        
+        .strategy-fallback {{
+            color: #999;
+            font-style: italic;
+            margin: 0;
+        }}
+        
+        /* Color coding for different strategy types */
+        .strategy-strategy {{
+            border-left-color: #667eea;
+        }}
+        
+        .strategy-strategy .strategy-icon {{
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }}
+        
+        .strategy-insight {{
+            border-left-color: #f59e0b;
+        }}
+        
+        .strategy-insight .strategy-icon {{
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }}
+        
+        .strategy-hypothesis {{
+            border-left-color: #10b981;
+        }}
+        
+        .strategy-hypothesis .strategy-icon {{
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }}
+        
+        .strategy-recommendation {{
+            border-left-color: #06b6d4;
+        }}
+        
+        .strategy-recommendation .strategy-icon {{
+            background: rgba(6, 182, 212, 0.1);
+            color: #06b6d4;
+        }}
+        
+        .strategy-test {{
+            border-left-color: #8b5cf6;
+        }}
+        
+        .strategy-test .strategy-icon {{
+            background: rgba(139, 92, 246, 0.1);
+            color: #8b5cf6;
+        }}
+        
+        .strategy-general {{
+            border-left-color: #6b7280;
+        }}
+        
+        .strategy-general .strategy-icon {{
+            background: rgba(107, 114, 128, 0.1);
+            color: #6b7280;
+        }}
+        
+        /* Chat button styles */
+        .chat-button-container {{
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 12px;
+        }}
+        
+        .chat-button {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }}
+        
+        .chat-button:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }}
+        
+        .chat-button:active {{
+            transform: translateY(0);
+        }}
+        
+        .chat-button:disabled {{
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }}
+        
         @media (max-width: 768px) {{
             .stats {{
                 grid-template-columns: 1fr;
@@ -377,6 +538,10 @@ def generate_html_report(
     if aggregated:
         html += generate_aggregated_section(aggregated)
     
+    # Chat button (only if task_id is available)
+    if task_id:
+        html += generate_chat_button_section(task_id)
+    
     # Individual creatives
     if creatives:
         html += generate_creatives_section(creatives)
@@ -398,6 +563,58 @@ def generate_html_report(
                     btn.classList.remove('copied');
                 }, 2000);
             });
+        }
+        
+        async function createChatSession(taskId) {
+            const button = document.querySelector('.chat-button');
+            const loadingDiv = document.getElementById('chat-loading');
+            
+            // Show loading state
+            button.disabled = true;
+            loadingDiv.style.display = 'block';
+            
+            try {
+                // Create chat session via API
+                const response = await fetch('/api/v1/chat-mvp/session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        task_id: taskId
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const sessionId = data.session_id;
+                
+                // Redirect to chat interface
+                // You can modify this URL based on your frontend routing
+                const chatUrl = `/static/chat_pro.html?session_id=${sessionId}`;
+                window.open(chatUrl, '_blank');
+                
+                // Update button text
+                button.innerHTML = '<span>✅</span> Чат створено!';
+                button.style.background = '#10b981';
+                
+            } catch (error) {
+                console.error('Error creating chat session:', error);
+                button.innerHTML = '<span>❌</span> Помилка! Спробуйте ще раз';
+                button.style.background = '#ef4444';
+                button.disabled = false;
+                
+                // Reset button after 3 seconds
+                setTimeout(() => {
+                    button.innerHTML = '<span>🚀</span> Створити чат для цієї задачі';
+                    button.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                }, 3000);
+            } finally {
+                loadingDiv.style.display = 'none';
+            }
         }
     </script>
 </body>
@@ -556,8 +773,10 @@ def generate_creatives_section(creatives: List[Dict[str, Any]]) -> str:
                         </div>
 """
         
+        # Parse and format strategy summary
+        strategy_html = format_strategy_summary(summary)
         html += f"""
-                        <div class="summary">{summary}</div>
+                        <div class="strategy-section">{strategy_html}</div>
 """
         
         if scores:
@@ -595,3 +814,102 @@ def generate_creatives_section(creatives: List[Dict[str, Any]]) -> str:
 """
     
     return html
+
+
+def format_strategy_summary(summary: str) -> str:
+    """
+    Format strategy summary text into structured HTML blocks.
+    
+    Parses text like:
+    **Стратегія:** Problem-solution approach | **Інсайти:** UGC style creates trust | **Гіпотези:** Test different hooks
+    
+    Returns structured HTML with icons and better formatting.
+    """
+    if not summary or not isinstance(summary, str):
+        return f'<div class="strategy-item"><p class="strategy-fallback">Опис недоступний</p></div>'
+    
+    # Try to parse structured format with **sections**
+    import re
+    
+    # Pattern to match **Label:** content
+    pattern = r'\*\*([^*]+):\*\*\s*([^|]*?)(?=\s*\|\s*\*\*|$)'
+    matches = re.findall(pattern, summary)
+    
+    if not matches:
+        # Fallback: display as simple text
+        return f'<div class="strategy-item"><div class="strategy-content">{summary}</div></div>'
+    
+    # Generate structured HTML
+    html = '<div class="strategy-grid">'
+    
+    for label, content in matches:
+        label = label.strip()
+        content = content.strip()
+        
+        # Determine icon and color based on label
+        icon, color_class = get_strategy_icon_and_color(label)
+        
+        html += f"""
+            <div class="strategy-item {color_class}">
+                <div class="strategy-header">
+                    <span class="strategy-icon">{icon}</span>
+                    <h4 class="strategy-label">{label}</h4>
+                </div>
+                <div class="strategy-content">{content}</div>
+            </div>
+        """
+    
+    html += '</div>'
+    return html
+
+
+def generate_chat_button_section(task_id: str) -> str:
+    """
+    Generate chat button section to create chat session for this task.
+    
+    Args:
+        task_id: Task ID to link with chat session
+    
+    Returns:
+        HTML string with chat button
+    """
+    return f"""
+            <div class="section">
+                <div class="chat-button-container">
+                    <h3 style="margin-bottom: 15px; color: #333; font-size: 18px;">💬 Створіть відео на основі цього аналізу</h3>
+                    <p style="margin-bottom: 20px; color: #666; font-size: 14px;">Використайте знайдені інсайти для створення ефективного відео-контенту</p>
+                    <button 
+                        class="chat-button" 
+                        onclick="createChatSession('{task_id}')"
+                        data-task-id="{task_id}"
+                    >
+                        <span>🚀</span>
+                        Створити чат для цієї задачі
+                    </button>
+                    <div id="chat-loading" style="display: none; margin-top: 15px; color: #667eea;">⏳ Створюємо сесію чату...</div>
+                </div>
+            </div>
+    """
+
+
+def get_strategy_icon_and_color(label: str) -> tuple[str, str]:
+    """
+    Get appropriate icon and CSS class for strategy section.
+    
+    Returns:
+        tuple: (icon_emoji, css_color_class)
+    """
+    label_lower = label.lower()
+    
+    if 'стратег' in label_lower:
+        return '🎯', 'strategy-strategy'
+    elif 'інсайт' in label_lower or 'insight' in label_lower:
+        return '💡', 'strategy-insight'
+    elif 'гіпотез' in label_lower or 'hypothesis' in label_lower:
+        return '🔬', 'strategy-hypothesis'
+    elif 'рекоменд' in label_lower or 'recommendation' in label_lower:
+        return '✅', 'strategy-recommendation'
+    elif 'тест' in label_lower or 'test' in label_lower:
+        return '🧪', 'strategy-test'
+    else:
+        return '📝', 'strategy-general'
