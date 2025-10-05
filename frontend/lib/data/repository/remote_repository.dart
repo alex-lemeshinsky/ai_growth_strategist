@@ -68,9 +68,7 @@ class RemoteRepository {
   }
 
   Future<String> generateVideo(GenerateVideoRequestModel payload) async {
-    final uri = Uri.parse(
-      'https://itsurkan4.app.n8n.cloud/webhook-test/5628f961-d272-4368-88aa-67dff5efa0d9',
-    );
+    final uri = Uri.parse(dotenv.get("GENERATE_VIDEO_HOOK_URL"));
     final result = await _postJson(uri, payload.toJson());
     return result['taskId']?.toString() ?? result['task_id']?.toString() ?? '';
   }
