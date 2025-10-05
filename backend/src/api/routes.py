@@ -78,12 +78,13 @@ async def parse_ads(request: ParseAdsRequest, background_tasks: BackgroundTasks)
 @router.post("/debug-parse")
 async def debug_parse_ads(request: ParseAdsRequest):
     """
-    Debug endpoint - returns raw Apify results without processing.
+    Debug endpoint - returns raw Apify results with filtering statistics.
     """
     try:
         logger.info(f"Debug processing request for URL: {request.url}")
 
-        # Initialize services
+        # Initialize services  
+        from src.services.apify_service import ApifyService
         apify_service = ApifyService()
 
         # Extract ads using Apify
@@ -93,13 +94,66 @@ async def debug_parse_ads(request: ParseAdsRequest):
             fetch_all_details=request.fetch_all_details
         )
 
-        logger.info(f"Debug: Raw ads count: {len(raw_ads) if raw_ads else 0}")
+        # Analyze media types
+        media_stats = {
+            "total": len(raw_ads),
+            "video_ads": 0,
+            "image_ads": 0,
+            "carousel_ads": 0,
+            "other_ads": 0
+        }
+        
+        sample_ads = []
+        
+        for ad in raw_ads[:5]:  # Show first 5 for debugging
+            snapshot = ad.get('snapshot', {})
+            
+            # Check media type
+            has_video = False
+            has_images = False
+            
+            # Check for videos
+            if snapshot.get('videos') and len(snapshot.get('videos', [])) > 0:
+                has_video = True
+            
+            # Check cards for video/images
+            cards = snapshot.get('cards', [])
+            for card in cards:
+                if card.get('video_hd_url') or card.get('video_sd_url'):
+                    has_video = True
+                if card.get('original_image_url') or card.get('resized_image_url'):
+                    has_images = True
+            
+            # Categorize
+            if has_video:
+                media_stats["video_ads"] += 1
+                media_type = "video"
+            elif len(cards) > 1:
+                media_stats["carousel_ads"] += 1
+                media_type = "carousel"
+            elif has_images:
+                media_stats["image_ads"] += 1
+                media_type = "image"
+            else:
+                media_stats["other_ads"] += 1
+                media_type = "other"
+            
+            sample_ads.append({
+                "ad_archive_id": ad.get('ad_archive_id'),
+                "media_type": media_type,
+                "has_video": has_video,
+                "cards_count": len(cards),
+                "videos_count": len(snapshot.get('videos', []))
+            })
+
+        logger.info(f"Debug: Media stats: {media_stats}")
         
         return {
             "success": True,
-            "message": f"Raw extraction complete. Found {len(raw_ads) if raw_ads else 0} items",
-            "raw_data": raw_ads,
-            "data_types": [type(item).__name__ for item in raw_ads] if raw_ads else []
+            "message": f"Extraction complete. Found {len(raw_ads)} items",
+            "media_stats": media_stats,
+            "sample_ads": sample_ads,
+            "requested_max": request.max_results
         }
 
     except Exception as e:

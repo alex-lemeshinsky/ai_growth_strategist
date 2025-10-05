@@ -42,11 +42,23 @@ async def parse_ads_task(task_id: str, url: str, max_results: int = 15, auto_ana
                 {"task_id": task_id},
                 {"$set": {
                     "status": TaskStatus.FAILED,
-                    "error": "No ads found",
+                    "error": "No video ads found after filtering",
                     "updated_at": datetime.utcnow()
                 }}
             )
+            logger.warning(f"⚠️ Task {task_id}: No video ads found after filtering")
             return
+        
+        # Count video ads
+        video_count = 0
+        for ad in raw_ads:
+            snapshot = ad.get('snapshot', {})
+            if (snapshot.get('videos') and len(snapshot.get('videos', [])) > 0) or \
+               any(card.get('video_hd_url') or card.get('video_sd_url') 
+                   for card in snapshot.get('cards', [])):
+                video_count += 1
+        
+        logger.info(f"🎥 Found {video_count}/{len(raw_ads)} video ads after filtering")
         
         # Save to creatives file
         page_name = raw_ads[0].get("page_name", "unknown") if raw_ads else "unknown"
@@ -169,6 +181,7 @@ async def analyze_creatives_task(task_id: str):
         # Analyze each creative
         analyses: List[CreativeAnalysis] = []
         failed_count = 0
+        skipped_non_video = 0
         loop = asyncio.get_event_loop()
         
         for idx, ad in enumerate(raw_ads, 1):
@@ -178,8 +191,8 @@ async def analyze_creatives_task(task_id: str):
                 
                 video_url = _pick_video_url(ad)
                 if not video_url:
-                    logger.warning(f"No video URL found for ad {ad_id}")
-                    failed_count += 1
+                    logger.info(f"⏭️ Skipping non-video ad {ad_id} (no video URL found)")
+                    skipped_non_video += 1
                     continue
                 
                 # Cache video (blocking operation - run in executor)
@@ -281,7 +294,7 @@ async def analyze_creatives_task(task_id: str):
                 # Continue with other creatives
                 continue
         
-        logger.info(f"📊 Analysis summary: {len(analyses)} successful, {failed_count} failed")
+        logger.info(f"📊 Analysis summary: {len(analyses)} successful, {failed_count} failed, {skipped_non_video} skipped (non-video)")
         
         if not analyses:
             raise ValueError(f"No creatives could be analyzed. All {len(raw_ads)} attempts failed.")
