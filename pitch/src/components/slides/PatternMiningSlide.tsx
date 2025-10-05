@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle } from 'lucide-react';
+import { AnalysisReportButton } from '../DemoButton';
 
 export const PatternMiningSlide = () => (
   <div className="space-y-6">
@@ -48,9 +49,16 @@ export const PatternMiningSlide = () => (
       </div>
     </div>
     <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl p-6 border border-blue-400/30 mt-8">
-      <p className="text-xl text-white font-semibold">
-        💡 Результат: База патернів з реальних, успішних оголошень — не випадкова генерація
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xl text-white font-semibold">
+          💡 Результат: База паттернів з реальних, успішних оголошень — не випадкова генерація
+        </p>
+        <AnalysisReportButton 
+          variant="secondary" 
+          size="md" 
+          showDescription={false}
+        />
+      </div>
     </div>
   </div>
 );

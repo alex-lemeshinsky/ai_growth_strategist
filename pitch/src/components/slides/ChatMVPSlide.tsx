@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle } from 'lucide-react';
+import { ChatDemoButton } from '../DemoButton';
 
 export const ChatMVPSlide = () => (
   <div className="space-y-6">
@@ -40,10 +41,17 @@ export const ChatMVPSlide = () => (
       </div>
     </div>
     <div className="bg-green-500/20 rounded-xl p-4 border border-green-400/30">
-      <p className="text-lg text-white flex items-center gap-3">
-        <CheckCircle className="w-6 h-6 text-green-400" />
-        <span className="font-semibold">✅ Вже реалізовано: Chat MVP Pro повністю працює</span>
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-lg text-white flex items-center gap-3">
+          <CheckCircle className="w-6 h-6 text-green-400" />
+          <span className="font-semibold">✅ Вже реалізовано: Chat MVP Pro повністю працює</span>
+        </p>
+        <ChatDemoButton 
+          variant="primary" 
+          size="md" 
+          showDescription={false}
+        />
+      </div>
     </div>
   </div>
 );
