@@ -122,13 +122,26 @@ async def create_session(request: CreateSessionRequest):
         db = MongoDB.get_db()
         await db.chat_sessions.insert_one(session.model_dump())
 
-        # Send initial greeting
+        # Create personalized greeting based on task analysis
+        greeting_text = await _create_initial_greeting(request.task_id, db)
+        
         greeting = ChatMessage(
             session_id=session_id,
             role="assistant",
-            text="Привіт! Я допоможу тобі створити бриф для перформанс-відео. Давай почнемо: що ти хочеш рекламувати?"
+            text=greeting_text
         )
         await db.chat_messages.insert_one(greeting.model_dump())
+        
+        # If task has existing final prompt, show it as well
+        # if request.task_id:
+        #     existing_prompt = await _get_existing_final_prompt(request.task_id, db)
+        #     if existing_prompt:
+        #         prompt_message = ChatMessage(
+        #             session_id=session_id,
+        #             role="assistant",
+        #             text=f"📝 **В аналізі вже є готовий промпт:**\n\n{existing_prompt}\n\n🔄 Можемо використати його як базу або створити новий. Розкажи про свій продукт!"
+        #         )
+        #         await db.chat_messages.insert_one(prompt_message.model_dump())
 
         logger.info(f"✅ Created chat session: {session_id}")
 
@@ -407,7 +420,8 @@ async def get_session_state(session_id: str):
                 "known": session.known.model_dump(),
                 "completeness": session.completeness,
                 "missing_fields": session.missing_fields,
-                "status": session.status
+                "status": session.status,
+                "task_id": session.task_id  # Include task_id for frontend
             }
         )
 
@@ -509,3 +523,89 @@ async def submit_brief(request: SubmitRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to submit brief: {str(e)}"
         )
+
+
+async def _create_initial_greeting(task_id: Optional[str], db) -> str:
+    """
+    Create personalized initial greeting based on task analysis data.
+    
+    If task_id is provided and task contains analysis, create a greeting that
+    references the findings. Otherwise, return default greeting.
+    """
+    default_greeting = "Привіт! Я допоможу тобі створити бриф для перформанс-відео. Давай почнемо: що ти хочеш рекламувати?"
+    
+    if not task_id:
+        return default_greeting
+    
+    try:
+        # Get task data
+        task = await db.tasks.find_one({"task_id": task_id})
+        if not task:
+            return default_greeting
+            
+        page_name = task.get("page_name", "Unknown")
+        analyzed_creatives = task.get("creatives_analyzed", [])
+        aggregated = task.get("aggregated_analysis")
+        
+        if not analyzed_creatives:
+            return default_greeting
+            
+        # Extract patterns for personalized greeting
+        from src.services.patterns_extractor import extract_patterns_summary
+        patterns = extract_patterns_summary(task)
+        
+        # Create personalized greeting
+        greeting_parts = [
+            f"💡 Привіт! Я вже проаналізував {len(analyzed_creatives)} креативів від **{page_name}**.",
+        ]
+        
+        # Add insights if available
+        if patterns and patterns.get("messaging", {}).get("pain_points"):
+            pain_points = patterns["messaging"]["pain_points"][:2]  # Top 2
+            if pain_points:
+                greeting_parts.append(
+                    f"🎯 Виявив основні болі аудиторії: {', '.join(pain_points[:2])}."
+                )
+        
+        if patterns and patterns.get("hooks"):
+            hooks = [hook["text"][:50] + "..." if len(hook["text"]) > 50 else hook["text"] 
+                    for hook in patterns["hooks"][:2] if isinstance(hook, dict)]
+            if hooks:
+                greeting_parts.append(
+                    f"🎣 Популярні хуки: {', '.join(hooks)}."
+                )
+        
+        greeting_parts.append(
+            "🚀 Тепер давай створимо бриф для твого відео на основі цих інсайтів! Почнемо з опису твого продукту:"
+        )
+        
+        return "\n\n".join(greeting_parts)
+        
+    except Exception as e:
+        logger.warning(f"Error creating personalized greeting for task {task_id}: {e}")
+        return default_greeting
+
+
+async def _get_existing_final_prompt(task_id: str, db) -> Optional[str]:
+    """
+    Get existing final prompt from task analysis if available.
+    
+    Returns:
+        Final prompt text if exists, None otherwise
+    """
+    try:
+        task = await db.tasks.find_one({"task_id": task_id})
+        if not task:
+            return None
+            
+        aggregated = task.get("aggregated_analysis")
+        if aggregated and isinstance(aggregated, dict):
+            video_prompt = aggregated.get("video_prompt")
+            if video_prompt and len(video_prompt.strip()) > 10:  # Must be substantial
+                return video_prompt.strip()
+                
+        return None
+        
+    except Exception as e:
+        logger.warning(f"Error getting existing final prompt for task {task_id}: {e}")
+        return None
