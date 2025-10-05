@@ -7,7 +7,7 @@ import 'app/app.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load();
+  await dotenv.load(fileName: "app.env");
 
   runApp(const ProviderScope(child: AIGrowthStrategistApp()));
 }
