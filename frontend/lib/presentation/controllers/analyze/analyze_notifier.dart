@@ -38,9 +38,30 @@ class AnalyzeNotifier extends Notifier<AnalyzeState> {
       if (taskId != null && taskId.isNotEmpty) {
         await _fetchTask(taskId, setLoading: false);
         _startPolling(taskId);
+        unawaited(loadCompletedTasks(refreshOnly: true));
       }
     } catch (error) {
       state = state.copyWith(isLoading: false, error: error.toString());
+    }
+  }
+
+  Future<void> loadCompletedTasks({bool refreshOnly = false}) async {
+    if (!refreshOnly) {
+      state = state.copyWith(isLoadingCompletedTasks: true, error: null);
+    }
+
+    try {
+      final tasks = await _remoteRepository.listCompletedTasks();
+
+      state = state.copyWith(
+        completedTasks: tasks.where((task) => task.status.toUpperCase() == 'COMPLETED').toList(growable: false),
+        isLoadingCompletedTasks: false,
+      );
+    } catch (error) {
+      state = state.copyWith(
+        isLoadingCompletedTasks: false,
+        error: error.toString(),
+      );
     }
   }
 
@@ -87,6 +108,7 @@ class AnalyzeNotifier extends Notifier<AnalyzeState> {
 
       if (isCompleted) {
         _pollingTimer?.cancel();
+        unawaited(loadCompletedTasks(refreshOnly: true));
       }
     } catch (error) {
       _pollingTimer?.cancel();

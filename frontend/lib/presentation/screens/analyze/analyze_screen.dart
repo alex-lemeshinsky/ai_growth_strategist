@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../controllers/analyze/analyze_notifier.dart';
+import '../../controllers/analyze/analyze_state.dart';
 
 class AnalyzeScreen extends ConsumerStatefulWidget {
   const AnalyzeScreen({super.key});
@@ -16,6 +17,17 @@ class AnalyzeScreen extends ConsumerStatefulWidget {
 class _AnalyzeScreenState extends ConsumerState<AnalyzeScreen> {
   final TextEditingController _urlController = TextEditingController();
   String? _lastSeenTaskId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      ref.read(analyzeProvider.notifier).loadCompletedTasks();
+    });
+  }
 
   @override
   void dispose() {
@@ -81,6 +93,8 @@ class _AnalyzeScreenState extends ConsumerState<AnalyzeScreen> {
                   style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error),
                 ),
               ],
+              const SizedBox(height: 32),
+              _buildCompletedTasksSection(state, theme),
             ],
           ),
         ),
@@ -147,5 +161,45 @@ class _AnalyzeScreenState extends ConsumerState<AnalyzeScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('Unable to open report URL: $url')));
     }
+  }
+
+  Widget _buildCompletedTasksSection(AnalyzeState state, ThemeData theme) {
+    final hasTasks = state.completedTasks.isNotEmpty;
+    final baseUrl = dotenv.get('BASE_URL');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Completed Tasks', style: theme.textTheme.titleMedium),
+        const SizedBox(height: 12),
+        if (state.isLoadingCompletedTasks)
+          const Center(child: CircularProgressIndicator())
+        else if (!hasTasks)
+          Text('No completed tasks yet.', style: theme.textTheme.bodySmall)
+        else
+          SizedBox(
+            height: 240,
+            child: ListView.separated(
+              itemCount: state.completedTasks.length,
+              shrinkWrap: true,
+              itemBuilder: (context, index) {
+                final task = state.completedTasks[index];
+                final title = (task.pageName?.trim().isNotEmpty ?? false)
+                    ? task.pageName!.trim()
+                    : 'Task ${task.taskId}';
+                final reportUrl = '$baseUrl/report/task/${task.taskId}';
+
+                return ListTile(
+                  title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                  subtitle: Text(task.status, style: theme.textTheme.bodySmall),
+                  trailing: const Icon(Icons.open_in_new),
+                  onTap: () => _openReport(reportUrl),
+                );
+              },
+              separatorBuilder: (_, __) => const Divider(height: 1),
+            ),
+          ),
+      ],
+    );
   }
 }

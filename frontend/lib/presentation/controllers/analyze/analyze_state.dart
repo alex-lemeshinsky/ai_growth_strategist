@@ -12,6 +12,8 @@ abstract class AnalyzeState with _$AnalyzeState {
     String? taskId,
     TaskEntity? task,
     String? error,
+    @Default(<TaskEntity>[]) List<TaskEntity> completedTasks,
+    @Default(false) bool isLoadingCompletedTasks,
   }) = _AnalyzeState;
 
   const AnalyzeState._();

@@ -86,12 +86,9 @@ class RemoteRepository {
     }
     final uri = _resolve('/api/v1/tasks', query);
     final decoded = _decodeOrThrow(uri, await _client.get(uri));
-    final data = decoded['data'];
-    if (data is List) {
-      return data;
-    }
-    if (decoded['items'] is List) {
-      return decoded['items'] as List<dynamic>;
+
+    if (decoded['tasks'] is List) {
+      return decoded['tasks'] as List<dynamic>;
     }
     return const [];
   }
@@ -105,6 +102,11 @@ class RemoteRepository {
   Future<TaskEntity> getTaskEntity(String taskId) async {
     final json = await getTask(taskId);
     return TaskEntity.fromJson(json);
+  }
+
+  Future<List<TaskEntity>> listCompletedTasks() async {
+    final raw = await listTasks(status: 'COMPLETED');
+    return raw.whereType<Map<String, dynamic>>().map(TaskEntity.fromJson).toList(growable: false);
   }
 
   Future<Map<String, dynamic>> analyzeCreatives(String taskId) async {
