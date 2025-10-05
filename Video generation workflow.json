@@ -1,0 +1,1897 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "5628f961-d272-4368-88aa-67dff5efa0d9",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -96,
+        -96
+      ],
+      "id": "d551aef7-27c7-414b-9f2d-23457fc33dc4",
+      "name": "Webhook",
+      "webhookId": "5628f961-d272-4368-88aa-67dff5efa0d9"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e528318d-0556-4a2a-a73e-c91cc5744361",
+              "name": "input",
+              "value": "={{ $('Webhook').item.json.body.input }}",
+              "type": "string"
+            },
+            {
+              "id": "d9c095af-3c16-431c-a71e-038312c2d949",
+              "name": "images",
+              "value": "={{ $('Webhook').item.json.body.images }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        736,
+        -96
+      ],
+      "id": "65652e51-8769-43a2-8ca3-ddc24d12512a",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze and parse the next text, and find relevant information, return the response in json format.\n{{ $('Webhook').item.json.body.input }}\n\n",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        944,
+        -96
+      ],
+      "id": "0eaccf3b-dafb-494a-afde-f592fec7b819",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"Pain_points\": [\n    \"Життєва/робоча проблема\",\n    \"Емоційний дискомфорт або хаос\"\n  ],\n  \"Concept\": \"Коротке відео (20–30с), яке показує контраст між проблемою і рішенням через візуальну трансформацію.\",\n  \"Visual_trends\": {\n    \"color_contrast\": \"Темне → світле (емоційний перехід від проблеми до рішення)\",\n    \"filters\": \"Суміш холодних і теплих тонів для динаміки\",\n    \"repetition\": \"Ключовий образ/продукт з’являється кілька разів для закріплення в пам'яті\"\n  },\n  \"Hooks\": [\n    \"Швидка зміна сцени в перші 3 секунди\",\n    \"Емоційний контраст, що зачіпає\",\n    \"Напруга з перших кадрів\"\n  ],\n  \"core_idea\": \"Показати, що навіть складна проблема може мати просте та ефективне рішення.\",\n  \"theme\": \"Трансформація (було погано → стало добре)\",\n  \"message\": \"Життя може бути іншим / простішим / кращим\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1088,
+        112
+      ],
+      "id": "523a10c1-58e0-40a0-9057-6c61e71cd0b9",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        944,
+        112
+      ],
+      "id": "e1411663-a902-41cd-8f49-5bb844cde53e",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "BMEdnEwXSZDdTW1L",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1312,
+        64
+      ],
+      "id": "d98d73f0-61b0-42ba-a60d-7fe6318f8f3b",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "BMEdnEwXSZDdTW1L",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.uuid }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        336,
+        96
+      ],
+      "id": "01c482f7-8058-458c-b071-e61be3d4cd9d",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "function uuidv4() { \n    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'\n    .replace(/[xy]/g, function (c) { \n        const r = Math.random() * 16 | 0,  \n            v = c == 'x' ? r : (r & 0x3 | 0x8); \n        return v.toString(16); \n    }); \n}\n\nreturn {uuid: uuidv4()};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        -96
+      ],
+      "id": "a5887d69-f84f-4af3-9260-f2edda6a910f",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "collection": "Generation",
+        "fields": "taskId, status",
+        "options": {
+          "dateFields": ""
+        }
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        96
+      ],
+      "id": "74dde356-c7ff-4120-a83d-f08d41eed368",
+      "name": "Insert documents",
+      "credentials": {
+        "mongoDb": {
+          "id": "czpay6AisGrvus3Z",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9629466b-1437-481b-a44d-a8ef5c60e9f3",
+              "name": "taskId",
+              "value": "={{ $json.uuid }}",
+              "type": "string"
+            },
+            {
+              "id": "2531cc26-ca64-4463-a381-7fdb8a5cf3ca",
+              "name": "status",
+              "value": "Started",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        544,
+        96
+      ],
+      "id": "c328ffaa-ca62-44b7-8f22-f3299e2380e5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json.output\nconst result = JSON.parse(input).prompts\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        -96
+      ],
+      "id": "7461d544-ad77-4643-af54-0c6b051d22ca",
+      "name": "ParseJsonPrompts"
+    },
+    {
+      "parameters": {
+        "content": "# 2) Generate Images",
+        "height": 260,
+        "width": 1220,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        -176
+      ],
+      "id": "f37625db-3e97-42e5-8006-360ebcc14884",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f9113c83-7b43-4dbe-830f-18a814c3f1f7",
+              "leftValue": "={{ $input.all().filter(item => item.json.status === \"processing\" || item.json.status === \"IN_QUEUE\").length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2608,
+        -96
+      ],
+      "id": "4d4e17a3-bd30-4ef0-b484-6f2ffcd4949c",
+      "name": "Images Done?"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2816,
+        -48
+      ],
+      "id": "13da8a65-b870-47e5-bdc4-9dfd5748a047",
+      "name": "3 Seconds",
+      "webhookId": "0a175f88-ae3a-4f35-b7c6-a9ae6deab1d5"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.urls.get }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3056,
+        -112
+      ],
+      "id": "ce554bb5-0cb3-412b-90d7-432a7e9f249e",
+      "name": "Get Images",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "tWyK8rIyBCYavUXe",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.urls.get }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2432,
+        -96
+      ],
+      "id": "4503e3d6-8d73-40da-8587-112235eaacc8",
+      "name": "Get Status",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "tWyK8rIyBCYavUXe",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 12
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2256,
+        -96
+      ],
+      "id": "8e733cb1-80b8-468c-bfa4-690d959b0ea2",
+      "name": "12 Seconds",
+      "webhookId": "1edecdff-d63e-4821-81a4-794545558e7e"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/models/stability-ai/stable-diffusion-3.5-large/predictions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "wait"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"input\": {\n      \"cfg\": 4.5,\n      \"prompt\": \"{{ $json.prompt }}\",\n      \"aspect_ratio\": \"9:16\",\n      \"output_format\": \"webp\",\n      \"prompt_strength\": 0.85\n    }\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2064,
+        -96
+      ],
+      "id": "478d2131-0293-482b-86b6-35f7fdf1a041",
+      "name": "HTTP Request",
+      "notesInFlow": false,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "tWyK8rIyBCYavUXe",
+          "name": "Bearer Auth account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "# 3) Generate Videos",
+        "height": 260,
+        "width": 1220,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        224
+      ],
+      "id": "7d35ae4b-f53f-4c7f-9b29-3b6dd535672c",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f9113c83-7b43-4dbe-830f-18a814c3f1f7",
+              "leftValue": "={{ $input.all().filter(item => item.json.status === \"processing\" || item.json.status === \"IN_QUEUE\").length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2608,
+        320
+      ],
+      "id": "129d6378-5925-493e-a0b2-e24c32662b2f",
+      "name": "Videos Done?"
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2816,
+        368
+      ],
+      "id": "b5723c9e-8b6b-4e6d-aaad-2b6647cdbee5",
+      "name": "20 Seconds",
+      "webhookId": "3df950c4-9116-466b-99ac-6c768615d247"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.output }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3056,
+        304
+      ],
+      "id": "0487aa99-3c95-4c77-b0c7-c016b999491e",
+      "name": "Get Videos",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "tWyK8rIyBCYavUXe",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.urls.get }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2432,
+        320
+      ],
+      "id": "f196caa8-58b6-4a92-a60e-f03c7391315e",
+      "name": "Get Video Status",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "tWyK8rIyBCYavUXe",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/models/kwaivgi/kling-v2.1/predictions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"input\": {\n      \"mode\": \"standard\",\n      \"prompt\": \"{{ $json.input.prompt }}\",\n      \"duration\": 5,\n      \"start_image\": \"{{ $json.output }}\",\n      \"negative_prompt\": \"\",\n\"aspect_ration\": \"9:16\"\n    }\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2080,
+        320
+      ],
+      "id": "63575aee-3d86-48d2-a900-69c0fca5dd1e",
+      "name": "Generate Videos",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "tWyK8rIyBCYavUXe",
+          "name": "Bearer Auth account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "# 5) Render Video",
+        "height": 260,
+        "width": 1224,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        1040
+      ],
+      "id": "e72e7bea-4f14-4320-933e-8a2c683cb1ef",
+      "name": "Sticky Note8"
+    },
+    {
+      "parameters": {
+        "content": "# 4) Generate Sound",
+        "height": 260,
+        "width": 1224,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2000,
+        624
+      ],
+      "id": "dd22d5a3-97be-4c34-8624-40db825a8192",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "amount": 60
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2592,
+        1120
+      ],
+      "id": "5454ce9b-213f-4e61-a6ee-8d59006c09c6",
+      "name": "60 Seconds",
+      "webhookId": "01f09bb5-28d7-4abd-9209-5a5359ddadc1"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2992,
+        1184
+      ],
+      "id": "5f5c2c9f-5f06-4bdc-bc5c-bfc64c436661",
+      "name": "10 Seconds",
+      "webhookId": "b79593c9-387d-44fc-b96b-99f374b27e03"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f04169da-679d-4009-9bc8-c4be2de53eed",
+              "name": "Audio",
+              "value": "={{ $('Generate Audio content').item.json.output }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2032,
+        1120
+      ],
+      "id": "6f7eda0a-2e19-4dc3-b8ac-2903446d0c3a",
+      "name": "Grab Elements"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.shotstack.io/edit/v1/render",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "uKl2XWj103yVEzpuKiPOcc8pqSYCmWR7j7HG2QHx"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"timeline\": {\n    \"tracks\": [\n      {\n        \"clips\": [\n          {\n            \"asset\": {\n              \"type\": \"video\",\n              \"src\": \"{{ $json.data[0] }}\",\n              \"volume\": 1\n            },\n            \"start\": 0,\n            \"length\": 5,\n            \"transition\": {\n              \"in\": \"fade\",\n              \"out\": \"fade\"\n            }\n          },\n          {\n            \"asset\": {\n              \"type\": \"video\",\n               \"src\": \"{{ $json.data[1] }}\",\n\n              \"volume\": 1\n            },\n            \"start\": 5,\n            \"length\": 5,\n            \"transition\": {\n              \"in\": \"fade\",\n              \"out\": \"fade\"\n            }\n          },\n          {\n            \"asset\": {\n              \n              \"type\": \"video\",\n               \"src\": \"{{ $json.data[2] }}\",\n              \"volume\": 1\n            },\n            \"start\": 10,\n            \"length\": 5,\n            \"transition\": {\n              \"in\": \"fade\",\n              \"out\": \"fade\"\n            }\n          },\n          {\n            \"asset\": {\n              \"type\": \"video\",\n               \"src\": \"{{ $json.data[3] }}\",\n              \"volume\": 1\n            },\n            \"start\": 15,\n            \"length\": 5,\n            \"transition\": {\n              \"in\": \"fade\",\n              \"out\": \"fade\"\n            }\n          }\n        ]\n      },\n      {\n        \"clips\": [\n          {\n            \"asset\": {\n              \"type\": \"audio\",\n              \"src\": \"{{ $('Grab Elements').item.json.Audio }}\",\n              \"effect\": \"fadeOut\",\n              \"volume\": 1\n            },\n            \"start\": 0,\n            \"length\": 20\n          }\n        ]\n      }\n    ]\n  },\n  \"output\": {\n    \"format\": \"mp4\",\n    \"size\": {\n      \"width\": 320,\n      \"height\": 480\n    },\n    \"fps\": 30\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2448,
+        1120
+      ],
+      "id": "010fca82-3e49-4285-b8ad-a45e220a24ab",
+      "name": "Render Video",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.id }}.wav",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1ksKoxwluD12iUpMNTrq_VqxP0NAXxedK",
+          "mode": "list",
+          "cachedResultName": "Creatives",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1ksKoxwluD12iUpMNTrq_VqxP0NAXxedK"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3632,
+        704
+      ],
+      "id": "8d2adf16-edc7-4e25-9c98-4885407bf148",
+      "name": "Upload to Drive",
+      "executeOnce": false,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "p90u2KIkg1hrqBKi",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You task is to generate a audio prompt based on context.\nGiven a context:\n {{ $json.data.first().audioContent.toJsonString() }}\n\n**Audio Prompt:**  \nA chill, motivational lo-fi beat featuring layered synths, soft hi-hats, and deep ambient bass. The rhythm is smooth and repetitive, giving off a cool, athletic vibe like a soundtrack to an early morning workout.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        2352,
+        704
+      ],
+      "id": "245bb15c-4eb4-47f3-bbec-11a1355fc0f7",
+      "name": "AI Agent2",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        2352,
+        896
+      ],
+      "id": "ca7163a9-59c5-4327-919b-cbaaf8961485",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "BMEdnEwXSZDdTW1L",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.id }}.webp",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1ksKoxwluD12iUpMNTrq_VqxP0NAXxedK",
+          "mode": "list",
+          "cachedResultName": "Creatives",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1ksKoxwluD12iUpMNTrq_VqxP0NAXxedK"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3632,
+        -112
+      ],
+      "id": "57246e3c-64a5-40eb-b53b-41c58641ad9d",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "p90u2KIkg1hrqBKi",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.output }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3408,
+        -112
+      ],
+      "id": "646e4109-8d60-401b-a7da-a3f4bd934870",
+      "name": "Get Images1",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "tWyK8rIyBCYavUXe",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "collection": "Creatives",
+        "updateKey": "status",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        4064,
+        -112
+      ],
+      "id": "a64ea15f-9ce0-4c6f-9a8c-bd86d6345264",
+      "name": "Update documents1",
+      "credentials": {
+        "mongoDb": {
+          "id": "czpay6AisGrvus3Z",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9629466b-1437-481b-a44d-a8ef5c60e9f3",
+              "name": "taskId",
+              "value": "={{ $('Code in JavaScript').item.json.uuid }}",
+              "type": "string"
+            },
+            {
+              "id": "2531cc26-ca64-4463-a381-7fdb8a5cf3ca",
+              "name": "status",
+              "value": "ImagesGenerated",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3856,
+        -112
+      ],
+      "id": "e30ae61e-deff-49a4-9022-094b3035a725",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "collection": "Creatives",
+        "updateKey": "taskId",
+        "fields": "status",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        4064,
+        320
+      ],
+      "id": "94291fac-1aec-45dc-ad19-1845b53bad8c",
+      "name": "Update documents2",
+      "credentials": {
+        "mongoDb": {
+          "id": "czpay6AisGrvus3Z",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "={{ $json.id }}.mp4",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1ksKoxwluD12iUpMNTrq_VqxP0NAXxedK",
+          "mode": "list",
+          "cachedResultName": "Creatives",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1ksKoxwluD12iUpMNTrq_VqxP0NAXxedK"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3632,
+        320
+      ],
+      "id": "2d016637-f398-47e0-85de-8a1f81f8aa85",
+      "name": "Upload videos",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "p90u2KIkg1hrqBKi",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9629466b-1437-481b-a44d-a8ef5c60e9f3",
+              "name": "taskId",
+              "value": "={{ $('Code in JavaScript').item.json.uuid }}",
+              "type": "string"
+            },
+            {
+              "id": "2531cc26-ca64-4463-a381-7fdb8a5cf3ca",
+              "name": "status",
+              "value": "VideoClipsGenerated",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3840,
+        320
+      ],
+      "id": "671b5dc5-f458-4c7a-b351-8d716cf35cd7",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "collection": "Creatives",
+        "updateKey": "taskid",
+        "fields": "status",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        4064,
+        704
+      ],
+      "id": "f92a6761-1842-4efc-acb9-2df465d10e76",
+      "name": "Update documents3",
+      "credentials": {
+        "mongoDb": {
+          "id": "czpay6AisGrvus3Z",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9629466b-1437-481b-a44d-a8ef5c60e9f3",
+              "name": "taskId",
+              "value": "={{ $('Code in JavaScript').item.json.uuid }}",
+              "type": "string"
+            },
+            {
+              "id": "2531cc26-ca64-4463-a381-7fdb8a5cf3ca",
+              "name": "status",
+              "value": "AudioGenerated",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3840,
+        704
+      ],
+      "id": "4a9cd93e-8827-4cb5-87f0-910450635595",
+      "name": "Edit Fields5"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.output }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3056,
+        704
+      ],
+      "id": "9d36b26d-af47-4a36-a88d-034eed1aefbf",
+      "name": "Get Audio content",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "tWyK8rIyBCYavUXe",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.replicate.com/v1/models/google/lyria-2/predictions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Prefer",
+              "value": "wait"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"input\": {\n      \"prompt\": \"{{ $json.output.replaceAll(\"**Audio Prompt:**  \\n\", \"\") }}\"\n    }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2672,
+        704
+      ],
+      "id": "daad8b3b-9c28-40d7-8ab3-46b22eccd0de",
+      "name": "Generate Audio content",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "tWyK8rIyBCYavUXe",
+          "name": "Bearer Auth account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fd794623-5151-404b-8ba0-60c661232673",
+              "name": "Video",
+              "value": "={{ $json.output }}",
+              "type": "string"
+            },
+            {
+              "id": "fd6928af-84d9-4356-8c55-cd5988d47a90",
+              "name": "audioContent",
+              "value": "={{ $json.input.prompt }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2048,
+        704
+      ],
+      "id": "cb917549-f7c0-4cf3-97ec-a0946e8a2b43",
+      "name": "Grab Video element"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        2192,
+        704
+      ],
+      "id": "e7097ce5-02e5-4e44-959d-6cf703165293",
+      "name": "Aggregate Video"
+    },
+    {
+      "parameters": {
+        "jsCode": "const grabNode = $('Grab Video element');\n\nconst urls = grabNode.all().map(item => item.json.Video);\n\n// повертаємо один item з ключем data\nreturn [\n  {\n    json: {\n      data: urls\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        1120
+      ],
+      "id": "99fa0055-dcb6-42f0-85b9-b52900607bc3",
+      "name": "Merge video array"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "collection": "Creatives",
+        "updateKey": "taskid",
+        "fields": "status",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        4064,
+        1120
+      ],
+      "id": "6cce7ccd-08a9-4013-a973-7b6d9967e66d",
+      "name": "Update documents4",
+      "credentials": {
+        "mongoDb": {
+          "id": "czpay6AisGrvus3Z",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9629466b-1437-481b-a44d-a8ef5c60e9f3",
+              "name": "taskId",
+              "value": "={{ $('Code in JavaScript').item.json.uuid }}",
+              "type": "string"
+            },
+            {
+              "id": "2531cc26-ca64-4463-a381-7fdb8a5cf3ca",
+              "name": "status",
+              "value": "Completed",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3824,
+        1120
+      ],
+      "id": "72088a65-ec6d-44ce-9aff-07f3d66affb3",
+      "name": "Edit Fields6"
+    },
+    {
+      "parameters": {
+        "name": "=FinalVideo_{{ $json.data[0].attributes.filename }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1ksKoxwluD12iUpMNTrq_VqxP0NAXxedK",
+          "mode": "list",
+          "cachedResultName": "Creatives",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1ksKoxwluD12iUpMNTrq_VqxP0NAXxedK"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        3600,
+        1120
+      ],
+      "id": "c172efa9-d854-4b50-8aa4-13cf8e3d47f9",
+      "name": "Upload Result Video",
+      "executeOnce": false,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "p90u2KIkg1hrqBKi",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2256,
+        320
+      ],
+      "id": "8b02b14d-4fb4-4bb2-8300-366e6bf7b888",
+      "name": "3 Minutes",
+      "webhookId": "c955252e-d3cb-47c8-a774-53d16c56a78b"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.shotstack.io/serve/v1/assets/render/{{ $json.response.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "uKl2XWj103yVEzpuKiPOcc8pqSYCmWR7j7HG2QHx"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2832,
+        1120
+      ],
+      "id": "b3942222-0e13-434a-83a5-a76b5ccd676d",
+      "name": "Download Video Result",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.data[0].attributes.url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3424,
+        1120
+      ],
+      "id": "a507a05b-b7d6-415c-b321-c6e837927cb4",
+      "name": "Get result file",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "tWyK8rIyBCYavUXe",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "collection": "Creatives",
+        "updateKey": "taskid",
+        "fields": "status",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mongoDb",
+      "typeVersion": 1.2,
+      "position": [
+        2992,
+        1488
+      ],
+      "id": "9d4befe8-8a66-44c3-9de0-d3c78c0d016a",
+      "name": "Update documents5",
+      "credentials": {
+        "mongoDb": {
+          "id": "czpay6AisGrvus3Z",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9629466b-1437-481b-a44d-a8ef5c60e9f3",
+              "name": "taskId",
+              "value": "={{ $('Code in JavaScript').item.json.uuid }}",
+              "type": "string"
+            },
+            {
+              "id": "2531cc26-ca64-4463-a381-7fdb8a5cf3ca",
+              "name": "status",
+              "value": "Failed",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2752,
+        1488
+      ],
+      "id": "4e1dfa8e-6143-4fa3-9965-de1526b40c4c",
+      "name": "Edit Fields7"
+    },
+    {
+      "parameters": {
+        "content": "# Fail Node",
+        "height": 260,
+        "width": 1224,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1984,
+        1408
+      ],
+      "id": "19540889-0f70-419c-8b21-f2ebdebac410",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "# Save interim results",
+        "height": 1540,
+        "width": 980,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3344,
+        -192
+      ],
+      "id": "c305e7d7-ee63-4759-8149-5caceaebe64a",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Given a data:\n{{ $json.output.toJsonString() }}\n\n\nProduce a valid JSON object with a prompts array. Each element in prompts must include:\n\n\"time\": the time range for this segment (e.g., \"0-2s\").\n\n\"element\": one of Hook, Problem, Solution, Payoff/CTA.\n\n\"prompt\": a descriptive, cinematic, photorealistic image prompt that visually represents this segment, considering the Pain_points, Concept, Visual_trends, Hooks, core_idea, theme, and message.\nAdd tags, like ~*~aesthetic~*~ #boho #fashion if needed\n\nMap the video structure as follows (11-second video):\n\n0-2s → Hook\n\n3-7s → Problem\n\n8-9s → Solution\n\n10-11s → Payoff/CTA\n\nImportant:\n\nDo not wrap the output in quotes or code fences.\n\nOutput must be pure JSON object only, fully valid and ready to parse.\n\nPrompts must be cinematic, highly detailed, visually engaging, photorealistic, and suitable for social media advertising.\nAdd new array 'images' {{ $('Edit Fields1').item.json.images }} to each element",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1312,
+        -96
+      ],
+      "id": "47060beb-2495-4f39-b3ff-a1b2342ac5b1",
+      "name": "AI Audio Prompt Agent"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "AI Audio Prompt Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Audio Prompt Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Insert documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ParseJsonPrompts": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Images Done?": {
+      "main": [
+        [
+          {
+            "node": "Get Images",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "3 Seconds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3 Seconds": {
+      "main": [
+        [
+          {
+            "node": "Get Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Status": {
+      "main": [
+        [
+          {
+            "node": "Images Done?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "12 Seconds": {
+      "main": [
+        [
+          {
+            "node": "Get Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "12 Seconds",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Images": {
+      "main": [
+        [
+          {
+            "node": "Generate Videos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Images1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Videos Done?": {
+      "main": [
+        [
+          {
+            "node": "Get Videos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "20 Seconds",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "20 Seconds": {
+      "main": [
+        [
+          {
+            "node": "Get Video Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Video Status": {
+      "main": [
+        [
+          {
+            "node": "Videos Done?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Videos": {
+      "main": [
+        [
+          {
+            "node": "3 Minutes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "60 Seconds": {
+      "main": [
+        [
+          {
+            "node": "Download Video Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "10 Seconds": {
+      "main": [
+        [
+          {
+            "node": "Download Video Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Grab Elements": {
+      "main": [
+        [
+          {
+            "node": "Merge video array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Video": {
+      "main": [
+        [
+          {
+            "node": "60 Seconds",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload to Drive": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent2": {
+      "main": [
+        [
+          {
+            "node": "Generate Audio content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Videos": {
+      "main": [
+        [
+          {
+            "node": "Upload videos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Grab Video element",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Images1": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Update documents1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload videos": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Update documents2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Update documents3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Audio content": {
+      "main": [
+        [
+          {
+            "node": "Upload to Drive",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Grab Elements",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Audio content": {
+      "main": [
+        [
+          {
+            "node": "Get Audio content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Grab Video element": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Video": {
+      "main": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge video array": {
+      "main": [
+        [
+          {
+            "node": "Render Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields6": {
+      "main": [
+        [
+          {
+            "node": "Update documents4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Result Video": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3 Minutes": {
+      "main": [
+        [
+          {
+            "node": "Get Video Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Video Result": {
+      "main": [
+        [
+          {
+            "node": "Get result file",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Get result file": {
+      "main": [
+        [
+          {
+            "node": "Upload Result Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields7": {
+      "main": [
+        [
+          {
+            "node": "Update documents5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Audio Prompt Agent": {
+      "main": [
+        [
+          {
+            "node": "ParseJsonPrompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c6c189b2-b512-4a37-9c3f-511fbb49de8b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d70183e8982d1d1f078dc684b2089f2b2b7797af5932de5316dcbe6d16ab8440"
+  },
+  "id": "iTaQBEwSEsF1ptp3",
+  "tags": []
+}
