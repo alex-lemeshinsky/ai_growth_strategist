@@ -46,6 +46,7 @@ app.include_router(policy_router, prefix="/api/v1/policy", tags=["policy"])
 app.include_router(video_router, prefix="/api/v1/video", tags=["video"])
 app.include_router(report_router, prefix="/report", tags=["reports"])
 app.include_router(chat_router, prefix="/api/v1/chat-mvp", tags=["chat"])
+app.include_router(chat_router, prefix="/api/v1/chat", tags=["chat"])  # Alternative path for compatibility
 
 # Mount static files for chat test UI
 app.mount("/static", StaticFiles(directory="static"), name="static")

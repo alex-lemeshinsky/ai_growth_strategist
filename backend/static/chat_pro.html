@@ -622,7 +622,16 @@
 
         // Initialize
         async function init() {
+            // Check for session_id in URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id');
+            
             await loadSessions();
+            
+            // If session_id provided, load that session
+            if (sessionId) {
+                await loadSession(sessionId);
+            }
         }
 
         // Load all sessions
