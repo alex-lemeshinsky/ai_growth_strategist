@@ -74,7 +74,7 @@ const Presentation = () => {
           <h2 className="text-5xl font-bold text-white mb-8">Єдиний інструмент для повного циклу</h2>
           <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
             <div className="text-center mb-8">
-              <div className="text-3xl font-bold text-green-400 mb-4">Мінімальний бриф</div>
+              <div className="text-3xl font-bold text-green-400 mb-4">Адаптований бриф</div>
               <div className="text-6xl mb-4">↓</div>
               <div className="text-3xl font-bold text-purple-400 mb-4">AI Processing</div>
               <div className="text-6xl mb-4">↓</div>

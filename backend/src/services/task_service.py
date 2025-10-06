@@ -315,8 +315,10 @@ async def analyze_creatives_task(task_id: str):
             from src.utils.html_report import generate_html_report
             
             task_data = {
+                "task_id": task_id,  # Add task_id for chat button integration
                 "page_name": task_doc.get("page_name"),
                 "total_ads": task_doc.get("total_ads"),
+                "source_url": task_doc.get("url"),  # Add original URL for reference
             }
             
             creatives_data = [a.model_dump() for a in analyses]

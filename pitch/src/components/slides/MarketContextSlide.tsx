@@ -27,7 +27,7 @@ export const MarketContextSlide = () => (
       <div className="grid grid-cols-2 gap-6 text-lg text-gray-300">
         <div>
           <Target className="w-8 h-8 text-blue-400 mb-2" />
-          <p>Витрачаємо мільйони $ на UA</p>
+          <p>Витрачаємо мільйони $ на рекламу</p>
           <p className="text-sm text-gray-400 mt-1">Креативи = критичний bottleneck</p>
         </div>
         <div>

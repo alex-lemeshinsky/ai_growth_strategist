@@ -88,6 +88,12 @@ export const PolicyReportButton: React.FC<Omit<DemoButtonProps, 'demoKey'>> = (p
   </DemoButton>
 );
 
+export const VideoDemoButton: React.FC<Omit<DemoButtonProps, 'demoKey'>> = (props) => (
+  <DemoButton {...props} demoKey="VIDEO_DEMO">
+    🎥 Демо відео
+  </DemoButton>
+);
+
 export const ApiDocsButton: React.FC<Omit<DemoButtonProps, 'demoKey'>> = (props) => (
   <DemoButton {...props} demoKey="API_DOCS">
     📚 API Docs
