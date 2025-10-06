@@ -27,6 +27,7 @@ def generate_html_report(
     total_ads = task_data.get("total_ads", len(creatives))
     analyzed_count = len(creatives)
     task_id = task_data.get("task_id", "")
+    source_url = task_data.get("source_url", "")
     
     html = f"""
 <!DOCTYPE html>
@@ -73,6 +74,17 @@ def generate_html_report(
         .header .meta {{
             opacity: 0.9;
             font-size: 14px;
+            line-height: 1.6;
+        }}
+        
+        .header .meta a {{
+            color: #e0f2fe !important;
+            text-decoration: underline;
+            transition: opacity 0.3s;
+        }}
+        
+        .header .meta a:hover {{
+            opacity: 0.8;
         }}
         
         .stats {{
@@ -441,6 +453,26 @@ def generate_html_report(
             color: #6b7280;
         }}
         
+        /* Visual trends styles */
+        .visual-trends-grid {{
+            display: grid;
+            gap: 12px;
+            margin-top: 10px;
+        }}
+        
+        .visual-trend-item {{
+            background: rgba(102, 126, 234, 0.05);
+            padding: 10px 15px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+            font-size: 14px;
+            line-height: 1.5;
+        }}
+        
+        .visual-trend-item strong {{
+            color: #667eea;
+        }}
+        
         /* Chat button styles */
         .chat-button-container {{
             text-align: center;
@@ -503,7 +535,7 @@ def generate_html_report(
             <h1>📊 Аналіз конкурента</h1>
             <div class="meta">
                 <strong>{page_name}</strong><br>
-                Проаналізовано: {datetime.now().strftime("%d.%m.%Y %H:%M")}
+                Проаналізовано: {datetime.now().strftime("%d.%m.%Y %H:%M")}{f'<br>🔗 Джерело: <a href="{source_url}" target="_blank" style="color: #e0f2fe; text-decoration: underline;">{source_url[:60]}{'...' if len(source_url) > 60 else ''}</a>' if source_url else ''}
             </div>
         </div>
         
@@ -575,7 +607,7 @@ def generate_html_report(
             
             try {
                 // Create chat session via API
-                const response = await fetch('/api/v1/chat-mvp/session', {
+                const response = await fetch('/api/v1/chat/session', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -665,33 +697,60 @@ def generate_aggregated_section(aggregated: Dict[str, Any]) -> str:
     # Pain points, concepts, hooks
     html += '<div class="insight-grid" style="margin-top: 20px;">'
     
-    if aggregated.get("pain_points"):
+    # Pain Points (support both formats)
+    pain_points = aggregated.get("Pain_points") or aggregated.get("pain_points", [])
+    if pain_points:
         html += """
                 <div class="insight-item">
                     <h3>Болі аудиторії</h3>
                     <ul>
 """
-        for pain in aggregated["pain_points"][:5]:
+        for pain in pain_points[:5]:
             html += f"                        <li>• {pain}</li>\n"
         html += "                    </ul>\n                </div>\n"
     
-    if aggregated.get("concepts"):
+    # Concepts (support both formats)
+    concepts = aggregated.get("Concept") or aggregated.get("concepts", [])
+    if concepts:
         html += """
                 <div class="insight-item">
                     <h3>Повторювані концепції</h3>
                     <ul>
 """
-        for concept in aggregated["concepts"][:5]:
+        for concept in concepts[:5]:
             html += f"                        <li>• {concept}</li>\n"
         html += "                    </ul>\n                </div>\n"
     
-    if aggregated.get("hooks"):
+    # Visual Trends (enhanced format)
+    visual_trends = aggregated.get("Visual_trends") or aggregated.get("visual_trends", {})
+    if visual_trends:
+        html += """
+                <div class="insight-item">
+                    <h3>Візуальні тренди</h3>
+                    <div class="visual-trends-grid">
+"""
+        if visual_trends.get("color_contrast"):
+            html += f"                        <div class='visual-trend-item'><strong>Контраст:</strong> {visual_trends['color_contrast']}</div>\n"
+        if visual_trends.get("filters"):
+            filters = visual_trends["filters"]
+            if isinstance(filters, list):
+                filters_text = ", ".join(filters)
+            else:
+                filters_text = str(filters)
+            html += f"                        <div class='visual-trend-item'><strong>Фільтри:</strong> {filters_text}</div>\n"
+        if visual_trends.get("repetition"):
+            html += f"                        <div class='visual-trend-item'><strong>Повторення:</strong> {visual_trends['repetition']}</div>\n"
+        html += "                    </div>\n                </div>\n"
+    
+    # Hooks (support both formats)
+    hooks = aggregated.get("Hooks") or aggregated.get("hooks", [])
+    if hooks:
         html += """
                 <div class="insight-item">
                     <h3>Популярні хуки</h3>
                     <ul>
 """
-        for hook in aggregated["hooks"][:5]:
+        for hook in hooks[:5]:
             hook_text = hook if isinstance(hook, str) else hook.get("description", str(hook))
             html += f"                        <li>• {hook_text}</li>\n"
         html += "                    </ul>\n                </div>\n"
@@ -749,6 +808,7 @@ def generate_creatives_section(creatives: List[Dict[str, Any]]) -> str:
                             <div>
                                 <div class="creative-id">#{i} {ad_id}</div>
                                 <small>{page_name}</small>
+                                {f'<br><a href="{video_url}" target="_blank" style="color: #667eea; text-decoration: none; font-size: 12px;"><small>🔗 Оригінал</small></a>' if video_url else ''}
                             </div>
                         </div>
 """

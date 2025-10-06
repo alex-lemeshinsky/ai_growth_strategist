@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<!-- Chat MVP Pro - Configurable version -->
+<html lang="uk"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat MVP Pro - Enhanced Test UI</title>
+    
+    <!-- Environment variables injection -->
+    <script>
+        window.__ENV__ = {
+            NEXT_PUBLIC_API_BASE_URL: 'https://test.ngrok.io' // Will be replaced by build process or at runtime
+        };
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* Sidebar with sessions list */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .btn-new-chat {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .btn-new-chat:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .sessions-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .session-item {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .session-item:hover {
+            background: #f5f5f5;
+        }
+
+        .session-item.active {
+            background: #ede7f6;
+            border-color: #667eea;
+        }
+
+        .session-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .session-meta {
+            font-size: 12px;
+            color: #999;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .session-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .session-status.active {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .session-status.final {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        /* Main chat container */
+        .container {
+            flex: 1;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            max-width: 900px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .session-info {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,0.3);
+            height: 4px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: white;
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #f5f5f5;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .message-content {
+            max-width: 70%;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .message.user .message-time {
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Options (quick-click buttons) */
+        .options-container {
+            margin: 10px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .option-chip {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 2px solid #1976d2;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-chip:hover {
+            background: #1976d2;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Suggestions */
+        .suggestions-container {
+            margin: 10px 0;
+        }
+
+        .suggestion-item {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 10px;
+            margin: 6px 0;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggestion-item:hover {
+            background: #ffe0b2;
+            transform: translateX(4px);
+        }
+
+        .suggestion-badge {
+            display: inline-block;
+            background: #ff9800;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .suggestion-badge.patterns {
+            background: #4caf50;
+        }
+
+        /* Policy hints */
+        .policy-hints {
+            margin: 10px 0;
+        }
+
+        .policy-hint {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 6px 0;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        /* Examples */
+        .examples-container {
+            margin: 10px 0;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .example-item {
+            padding: 6px 0;
+            font-style: italic;
+        }
+
+        /* Final brief */
+        .final-brief {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+
+        .final-brief h3 {
+            color: #856404;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brief-fields {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .brief-field {
+            display: flex;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .brief-field strong {
+            min-width: 140px;
+            color: #667eea;
+        }
+
+        /* Creative spec */
+        .creative-spec {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .creative-spec h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+
+        .spec-section {
+            background: white;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+
+        .spec-section h4 {
+            color: #4caf50;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .spec-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .spec-list li {
+            padding: 4px 0;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .spec-list li::before {
+            content: "→ ";
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .final-prompt {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .btn-submit {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-submit:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-field:focus {
+            border-color: #667eea;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-send:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            max-width: fit-content;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+
+        .completeness-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .error-message {
+            background: #fee;
+            border-left: 4px solid #f44;
+            padding: 12px;
+            border-radius: 8px;
+            color: #c33;
+            margin: 10px 0;
+        }
+
+        .success-message {
+            background: #efe;
+            border-left: 4px solid #4f4;
+            padding: 12px;
+            border-radius: 8px;
+            color: #393;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 1024px) {
+            body {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+            }
+
+            .container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar with sessions -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>💬 Історія чатів</h2>
+            <button class="btn-new-chat" onclick="createNewSession()">+ Новий чат</button>
+        </div>
+        <div class="sessions-list" id="sessionsList">
+                    <div class="session-item active" onclick="loadSession(&#39;5ef5a16c-e68d-4dbf-9fad-243d60c45da8&#39;)">
+                        <div class="session-title">додаток для планування харчування</div>
+                        <div class="session-meta">
+                            <span>5 жовт., 06:02</span>
+                            <span class="session-status final"><readpronunciation-text original="final" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="final" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">final</readpronunciation-word></readpronunciation-text></span>
+                        </div>
+                    </div>
+                
+                    <div class="session-item " onclick="loadSession(&#39;192bedb1-63d6-49a5-8640-f8c4aa480612&#39;)">
+                        <div class="session-title">Новий чат</div>
+                        <div class="session-meta">
+                            <span>5 жовт., 05:57</span>
+                            <span class="session-status active"><readpronunciation-text original="active" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="active" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">activ</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text></span>
+                        </div>
+                    </div>
+                
+                    <div class="session-item " onclick="loadSession(&#39;d5084456-8bf7-42b2-ba40-58d02de8d493&#39;)">
+                        <div class="session-title">Додаток на базі ШІ для харчування та підбору рецептів</div>
+                        <div class="session-meta">
+                            <span>5 жовт., 01:02</span>
+                            <span class="session-status active"><readpronunciation-text original="active" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="active" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">activ</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text></span>
+                        </div>
+                    </div>
+                
+                    <div class="session-item " onclick="loadSession(&#39;ba51dbef-4e12-4e8a-bfa7-99c9dfee6b06&#39;)">
+                        <div class="session-title">Новий чат</div>
+                        <div class="session-meta">
+                            <span>5 жовт., 01:00</span>
+                            <span class="session-status active"><readpronunciation-text original="active" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="active" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">activ</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text></span>
+                        </div>
+                    </div>
+                
+                    <div class="session-item " onclick="loadSession(&#39;60929511-f022-4e4b-9099-02a436eb6c48&#39;)">
+                        <div class="session-title">Новий чат</div>
+                        <div class="session-meta">
+                            <span>5 жовт., 00:54</span>
+                            <span class="session-status active"><readpronunciation-text original="active" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="active" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">activ</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text></span>
+                        </div>
+                    </div>
+                
+                    <div class="session-item " onclick="loadSession(&#39;0805bbe7-6af7-4913-961e-c96a2f0ac369&#39;)">
+                        <div class="session-title">Новий чат</div>
+                        <div class="session-meta">
+                            <span>5 жовт., 00:54</span>
+                            <span class="session-status active"><readpronunciation-text original="active" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="active" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">activ</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text></span>
+                        </div>
+                    </div>
+                
+                    <div class="session-item " onclick="loadSession(&#39;e2e3fdeb-ab7c-48b5-a94b-ca3bcdcf9baf&#39;)">
+                        <div class="session-title">Додаток на базі ШІ, який дозволить користувачам не думати, що ж поїсти і де це купити</div>
+                        <div class="session-meta">
+                            <span>4 жовт., 21:49</span>
+                            <span class="session-status final"><readpronunciation-text original="final" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="final" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">final</readpronunciation-word></readpronunciation-text></span>
+                        </div>
+                    </div>
+                
+                    <div class="session-item " onclick="loadSession(&#39;7e81463a-b66a-4870-bf48-858b09e6ee73&#39;)">
+                        <div class="session-title">Новий чат</div>
+                        <div class="session-meta">
+                            <span>4 жовт., 21:40</span>
+                            <span class="session-status active"><readpronunciation-text original="active" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="active" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">activ</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text></span>
+                        </div>
+                    </div>
+                
+                    <div class="session-item " onclick="loadSession(&#39;1bb2bcd5-40b1-425e-8a73-a3373653194e&#39;)">
+                        <div class="session-title">Новий чат</div>
+                        <div class="session-meta">
+                            <span>4 жовт., 21:23</span>
+                            <span class="session-status active"><readpronunciation-text original="active" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="active" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">activ</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text></span>
+                        </div>
+                    </div>
+                
+                    <div class="session-item " onclick="loadSession(&#39;fa1e5df0-bc8e-4142-b6ca-58fc01e067aa&#39;)">
+                        <div class="session-title">Додаток на базі ШІ, який дозволить користувачам не думати, що ж поїсти і де це купити.</div>
+                        <div class="session-meta">
+                            <span>4 жовт., 20:54</span>
+                            <span class="session-status final"><readpronunciation-text original="final" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="final" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">final</readpronunciation-word></readpronunciation-text></span>
+                        </div>
+                    </div>
+                </div>
+    </div>
+
+    <!-- Main chat container -->
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1><readpronunciation-text original="💬 Chat MVP Pro" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">💬 </readpronunciation-span><readpronunciation-word original="Chat" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Chat</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="MVP" lang="en" part-of-speech-mapped="NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">MVP</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="Pro" lang="en" part-of-speech-mapped="FW,FW,FW" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Pro</readpronunciation-word></readpronunciation-text></h1>
+                <div class="session-info" id="sessionInfo"><readpronunciation-text original="Session: 5ef5a16c... 📊 (linked to analysis)" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="Session" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Session</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">: 5</readpronunciation-span><readpronunciation-word original="ef" lang="en" part-of-speech-mapped="NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">ef</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">5</readpronunciation-span><readpronunciation-word original="a" lang="en" part-of-speech-mapped="DT" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">a</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">16</readpronunciation-span><readpronunciation-word original="c" lang="en" part-of-speech-mapped="NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">c</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">... 📊 (</readpronunciation-span><readpronunciation-word original="linked" lang="en" part-of-speech-mapped="VBN,VBN,VBN,VBN,VBN,VBN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">link</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">d</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="to" lang="en" part-of-speech-mapped="TO,TO" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">to</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="analysis" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">analysis</readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">)</readpronunciation-span></readpronunciation-text></div>
+            </div>
+            <div class="completeness-badge" id="completeness" style="">100%</div>
+        </div>
+        <div class="progress-bar" style="">
+            <div class="progress-fill" id="progressFill" style="width: 100%;"></div>
+        </div>
+
+        <div class="messages" id="messages"><div class="message assistant"><div class="message-avatar">🤖</div><div class="message-content"><readpronunciation-text original="💡 Привіт! Я вже проаналізував 5 креативів від **Guru Apps**.
+
+🎯 Виявив основні болі аудиторії: iPhone slowing down due to full storage, Full iPhone storage.
+
+🎣 Популярні хуки: iPhone slowing down due to a specific error, Ruining a new iPhone on day one.
+
+🚀 Тепер давай створимо бриф для твого відео на основі цих інсайтів! Почнемо з опису твого продукту:" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">💡 Привіт! Я вже проаналізував 5 креативів від **</readpronunciation-span><readpronunciation-word original="Guru" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Guru</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="Apps" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Apps</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">**.
+
+🎯 Виявив основні болі аудиторії: </readpronunciation-span><readpronunciation-word original="iPhone" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">iPhon</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="slowing" lang="en" part-of-speech-mapped="VBG,VBG,VBG,VBG,VBG,VBG,VBG" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">slowin</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">g</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="down" lang="en" part-of-speech-mapped="RB,RB,RB,RB" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">down</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="due" lang="en" part-of-speech-mapped="JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">du</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="to" lang="en" part-of-speech-mapped="TO,TO" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">to</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="full" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">full</readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;"> </readpronunciation-span><readpronunciation-word original="storage" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">storag</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">, </readpronunciation-span><readpronunciation-word original="Full" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Full</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="iPhone" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">iPhon</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="storage" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">storag</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">.
+
+🎣 Популярні хуки: </readpronunciation-span><readpronunciation-word original="iPhone" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">iPhon</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="slowing" lang="en" part-of-speech-mapped="VBG,VBG,VBG,VBG,VBG,VBG,VBG" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">slowin</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">g</readpronunciation-span></readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;"> </readpronunciation-span><readpronunciation-word original="down" lang="en" part-of-speech-mapped="RB,RB,RB,RB" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">down</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="due" lang="en" part-of-speech-mapped="JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">du</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="to" lang="en" part-of-speech-mapped="TO,TO" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">to</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="a" lang="en" part-of-speech-mapped="DT" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">a</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="specific" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">specific</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="error" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">error</readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">, </readpronunciation-span><readpronunciation-word original="Ruining" lang="en" part-of-speech-mapped="VBG,VBG,VBG,VBG,VBG,VBG,VBG" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">Ruinin</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">g</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="a" lang="en" part-of-speech-mapped="DT" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">a</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="new" lang="en" part-of-speech-mapped="JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">n</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">w</readpronunciation-span></readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;"> </readpronunciation-span><readpronunciation-word original="iPhone" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">iPhon</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="on" lang="en" part-of-speech-mapped="IN,IN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">on</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="day" lang="en" part-of-speech-mapped="NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">day</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="one" lang="en" part-of-speech-mapped="CD,CD,CD" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">on</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">.
+
+🚀 Тепер давай створимо бриф для твого відео на основі цих інсайтів! Почнемо з опису твого продукту:</readpronunciation-span></readpronunciation-text><div class="message-time" style="">06:01</div></div></div><div class="message user" style=""><div class="message-avatar" style="">👤</div><div class="message-content" style="">Це додаток для планування харчування<div class="message-time" style="">09:01</div></div></div><div class="message assistant" style=""><div class="message-avatar" style="">🤖</div><div class="message-content" style="">Чудово! Тепер, для кого саме цей додаток буде найкориснішим? Наприклад, "студенти, які хочуть харчуватися здоровіше" або "зайняті батьки, які планують сімейні обіди".<div class="message-time" style="">09:01</div></div></div><div class="examples-container"><strong style="">📝 Приклади:</strong><div class="example-item" style="">• Студенти, які хочуть харчуватися здоровіше</div><div class="example-item" style="">• Зайняті батьки, які планують сімейні обіди</div></div><div class="message user" style=""><div class="message-avatar" style="">👤</div><div class="message-content" style="">Зайняті батьки, які планують сімейні обіди<div class="message-time" style="">09:01</div></div></div><div class="message assistant"><div class="message-avatar">🤖</div><div class="message-content"><readpronunciation-text original="Супер! Яку платформу оберемо для відео? Найпопулярніші зараз TikTok, Instagram Reels та YouTube Shorts." lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">Супер! Яку платформу оберемо для відео? Найпопулярніші зараз </readpronunciation-span><readpronunciation-word original="TikTok" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">TikTok</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">, </readpronunciation-span><readpronunciation-word original="Instagram" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Instagram</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="Reels" lang="en" part-of-speech-mapped="VBZ,VBZ,VBZ,VBZ,VBZ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Reels</readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;"> та </readpronunciation-span><readpronunciation-word original="YouTube" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">Y</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">o</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">uTub</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="Shorts" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Shorts</readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">.</readpronunciation-span></readpronunciation-text><div class="message-time" style="">09:01</div></div></div><div class="options-container"><button class="option-chip">TikTok</button><button class="option-chip">Instagram</button><button class="option-chip"><readpronunciation-text original="YouTube" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="YouTube" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">Y</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">o</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">uTub</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text></button></div><div class="message user"><div class="message-avatar">👤</div><div class="message-content"><readpronunciation-text original="Instagram" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="Instagram" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Instagram</readpronunciation-word></readpronunciation-text><div class="message-time" style="">09:01</div></div></div><div class="message assistant"><div class="message-avatar">🤖</div><div class="message-content"><readpronunciation-text original="Чудово! Яку тривалість відео оберемо? Зазвичай, для Instagram Reels добре підходять 6, 9, 15 або 30 секунд." lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">Чудово! Яку тривалість відео оберемо? Зазвичай, для </readpronunciation-span><readpronunciation-word original="Instagram" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Instagram</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="Reels" lang="en" part-of-speech-mapped="VBZ,VBZ,VBZ,VBZ,VBZ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Reels</readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;"> добре підходять 6, 9, 15 або 30 секунд.</readpronunciation-span></readpronunciation-text><div class="message-time" style="">09:01</div></div></div><div class="options-container"><button class="option-chip">6</button><button class="option-chip" style="">9</button><button class="option-chip" style="">15</button><button class="option-chip">30</button></div><div class="message user"><div class="message-avatar">👤</div><div class="message-content">9<div class="message-time">09:01</div></div></div><div class="message assistant"><div class="message-avatar">🤖</div><div class="message-content"><readpronunciation-text original="Чудово! Яку ціль ми ставимо перед відео? Хочемо, щоб користувачі встановили додаток, зареєструвалися, здійснили покупку, чи просто перейшли на сайт? 
+
+Оберіть один з варіантів: встановити (install), зареєструватися (signup), купити (purchase), перейти на сайт (traffic)." lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">Чудово! Яку ціль ми ставимо перед відео? Хочемо, щоб користувачі встановили додаток, зареєструвалися, здійснили покупку, чи просто перейшли на сайт? 
+
+Оберіть один з варіантів: встановити (</readpronunciation-span><readpronunciation-word original="install" lang="en" part-of-speech-mapped="VB,VB,VB,VB,VB,VB,VB" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">install</readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">), зареєструватися (</readpronunciation-span><readpronunciation-word original="signup" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">si</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">g</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">nup</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">), купити (</readpronunciation-span><readpronunciation-word original="purchase" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">purchas</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">), перейти на сайт (</readpronunciation-span><readpronunciation-word original="traffic" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">traffic</readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">).</readpronunciation-span></readpronunciation-text><div class="message-time" style="">09:01</div></div></div><div class="options-container"><button class="option-chip">install</button><button class="option-chip"><readpronunciation-text original="signup" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="signup" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">si</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">g</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">nup</readpronunciation-span></readpronunciation-word></readpronunciation-text></button><button class="option-chip"><readpronunciation-text original="purchase" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="purchase" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">purchas</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text></button><button class="option-chip">traffic</button></div><div class="examples-container"><strong>📝 Приклади:</strong><div class="example-item">• Встановити додаток</div><div class="example-item">• Перейти на сайт</div></div><div class="message user"><div class="message-avatar">👤</div><div class="message-content"><readpronunciation-text original="purchase" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="purchase" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">purchas</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text><div class="message-time" style="">09:01</div></div></div><div class="message assistant" style=""><div class="message-avatar" style="">🤖</div><div class="message-content" style="">Який текст заклику до дії ми використаємо? Наприклад, "Купуйте зараз" або "Завантажте безкоштовно".<div class="message-time" style="">09:01</div></div></div><div class="examples-container"><strong style="">📝 Приклади:</strong><div class="example-item" style="">• Купуйте зараз</div><div class="example-item" style="">• Спробуйте безкоштовно</div></div><div class="message user" style=""><div class="message-avatar" style="">👤</div><div class="message-content" style="">Експериментуй. Живи. Смакуй.<div class="message-time" style="">09:02</div></div></div><div class="message assistant" style=""><div class="message-avatar" style="">🤖</div><div class="message-content" style="">Який гачок використаємо на початку відео, щоб привернути увагу? Наприклад, показати поширену проблему або несподіване рішення.<div class="message-time" style="">09:02</div></div></div><div class="suggestions-container"><div style="font-weight: bold; margin-bottom: 8px; font-size: 13px;">💡 Пропозиції:</div><div class="suggestion-item" style=""><readpronunciation-text original="
+                    iPhone slowing down due to a specific error
+                    " lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+                    </readpronunciation-span><readpronunciation-word original="iPhone" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">iPhon</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="slowing" lang="en" part-of-speech-mapped="VBG,VBG,VBG,VBG,VBG,VBG,VBG" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">slowin</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">g</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="down" lang="en" part-of-speech-mapped="RB,RB,RB,RB" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">down</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="due" lang="en" part-of-speech-mapped="JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">du</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="to" lang="en" part-of-speech-mapped="TO,TO" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">to</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="a" lang="en" part-of-speech-mapped="DT" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">a</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="specific" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">specific</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="error" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">error</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+                    </readpronunciation-span></readpronunciation-text><span class="suggestion-badge patterns" style="">🎯 З аналізу</span>
+                </div><div class="suggestion-item" style=""><readpronunciation-text original="
+                    Full iPhone storage
+                    " lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+                    </readpronunciation-span><readpronunciation-word original="Full" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Full</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="iPhone" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">iPhon</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="storage" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">storag</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+                    </readpronunciation-span></readpronunciation-text><span class="suggestion-badge patterns" style="">🎯 З аналізу</span>
+                </div></div><div class="examples-container"><strong style="">📝 Приклади:</strong><div class="example-item" style="">• Швидкий рецепт для зайнятих батьків</div><div class="example-item" style="">• Як приготувати корисний обід за 15 хвилин</div></div><div class="message user"><div class="message-avatar">👤</div><div class="message-content"><readpronunciation-text original="iPhone slowing down due to a specific error" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="iPhone" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">iPhon</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="slowing" lang="en" part-of-speech-mapped="VBG,VBG,VBG,VBG,VBG,VBG,VBG" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">slowin</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">g</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="down" lang="en" part-of-speech-mapped="RB,RB,RB,RB" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">down</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="due" lang="en" part-of-speech-mapped="JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">du</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="to" lang="en" part-of-speech-mapped="TO,TO" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">to</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="a" lang="en" part-of-speech-mapped="DT" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">a</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="specific" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">specific</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="error" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">error</readpronunciation-word></readpronunciation-text><div class="message-time" style="">09:02</div></div></div><div class="message assistant" style=""><div class="message-avatar" style="">🤖</div><div class="message-content" style="">Яку структуру відео оберемо? Наприклад, проблема-рішення, до-після, відгук клієнта, або мульті-сцена?<div class="message-time" style="">09:02</div></div></div><div class="options-container"><button class="option-chip" style="">проблема-рішення</button><button class="option-chip" style="">до-після</button><button class="option-chip">відгук клієнта</button><button class="option-chip">мульті-сцена</button></div><div class="suggestions-container"><div style="font-weight: bold; margin-bottom: 8px; font-size: 13px;">💡 Пропозиції:</div><div class="suggestion-item" style=""><readpronunciation-text original="
+                    multi-scene
+                    " lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+                    </readpronunciation-span><readpronunciation-word original="multi-scene" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,-,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">multi-s</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">c</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">en</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+                    </readpronunciation-span></readpronunciation-text><span class="suggestion-badge patterns" style="">🎯 З аналізу</span>
+                </div><div class="suggestion-item" style="">
+                    hook-body-cta
+                    <span class="suggestion-badge patterns" style="">🎯 З аналізу</span>
+                </div></div><div class="examples-container"><strong style="">📝 Приклади:</strong><div class="example-item" style="">• Проблема-рішення: показуємо проблему з плануванням харчування, а потім наше рішення.</div><div class="example-item" style="">• До-після: показуємо, як було до використання додатку і як стало після.</div></div><div class="message user" style=""><div class="message-avatar" style="">👤</div><div class="message-content" style="">до-після<div class="message-time" style="">09:02</div></div></div><div class="message assistant"><div class="message-avatar">🤖</div><div class="message-content">Який візуальний стиль відео оберемо? Наприклад, UGC, скрінкаст, відгук клієнта, чи щось інше?<div class="message-time" style="">09:02</div></div></div><div class="options-container"><button class="option-chip">UGC</button><button class="option-chip" style="">Скрінкаст</button><button class="option-chip">Відгук клієнта</button></div><div class="suggestions-container"><div style="font-weight: bold; margin-bottom: 8px; font-size: 13px;">💡 Пропозиції:</div><div class="suggestion-item">
+                    Спробуйте скрінкаст, щоб показати функціонал додатку.
+                    <span class="suggestion-badge default"><readpronunciation-text original="💡 Best practice" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">💡 </readpronunciation-span><readpronunciation-word original="Best" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Best</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="practice" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">practic</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text></span>
+                </div></div><div class="examples-container"><strong>📝 Приклади:</strong><div class="example-item">• UGC з мамою, яка готує обід</div><div class="example-item">• Скрінкаст з демонстрацією планування меню</div></div><div class="message user"><div class="message-avatar">👤</div><div class="message-content">UGC<div class="message-time">09:02</div></div></div><div class="message assistant"><div class="message-avatar">🤖</div><div class="message-content">✅ Чудово! Я зібрав всю необхідну інформацію.<div class="message-time">09:02</div></div></div><div class="final-brief"><h3>📋 Готовий бриф</h3><div class="brief-fields"><div class="brief-field"><strong>Продукт:</strong> додаток для планування харчування</div><div class="brief-field"><strong>Аудиторія:</strong> Зайняті батьки, які планують сімейні обіди</div><div class="brief-field"><strong>Мета:</strong><readpronunciation-text original=" purchase" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="purchase" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">purchas</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text></div><div class="brief-field"><strong>Платформа:</strong><readpronunciation-text original=" instagram" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="instagram" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">instagram</readpronunciation-word></readpronunciation-text></div><div class="brief-field"><strong>Формат:</strong><readpronunciation-text original=" N/A" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="N" lang="en" part-of-speech-mapped="NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">N</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">/</readpronunciation-span><readpronunciation-word original="A" lang="en" part-of-speech-mapped="DT" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">A</readpronunciation-word></readpronunciation-text></div><div class="brief-field"><strong>Тривалість:</strong><readpronunciation-text original=" 9s" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> 9</readpronunciation-span><readpronunciation-word original="s" lang="en" part-of-speech-mapped="NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">s</readpronunciation-word></readpronunciation-text></div><div class="brief-field"><strong>CTA:</strong> Експериментуй. Живи. Смакуй.</div></div><div class="creative-spec"><h3>🎬 Креативна специфікація</h3><div class="spec-section"><h4><readpronunciation-text original="Hook" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="Hook" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Hook</readpronunciation-word></readpronunciation-text></h4><div><readpronunciation-text original="Тип: text" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">Тип: </readpronunciation-span><readpronunciation-word original="text" lang="en" part-of-speech-mapped="NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">text</readpronunciation-word></readpronunciation-text></div><div><readpronunciation-text original="Опис: iPhone slowing down due to a specific error" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">Опис: </readpronunciation-span><readpronunciation-word original="iPhone" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">iPhon</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="slowing" lang="en" part-of-speech-mapped="VBG,VBG,VBG,VBG,VBG,VBG,VBG" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">slowin</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">g</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="down" lang="en" part-of-speech-mapped="RB,RB,RB,RB" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">down</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="due" lang="en" part-of-speech-mapped="JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">du</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="to" lang="en" part-of-speech-mapped="TO,TO" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">to</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="a" lang="en" part-of-speech-mapped="DT" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">a</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="specific" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">specific</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="error" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">error</readpronunciation-word></readpronunciation-text></div></div><div class="spec-section"><h4><readpronunciation-text original="Structure" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="Structure" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">Structur</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text></h4><div>до-після</div></div><div class="spec-section"><h4><readpronunciation-text original="Style" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="Style" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">Styl</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word></readpronunciation-text></h4><div><readpronunciation-text original="Production: UGC" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="Production" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Production</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">: </readpronunciation-span><readpronunciation-word original="UGC" lang="en" part-of-speech-mapped="NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">UGC</readpronunciation-word></readpronunciation-text></div><div><readpronunciation-text original="Pacing: dynamic" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="Pacing" lang="en" part-of-speech-mapped="VBG,VBG,VBG,VBG,VBG,VBG" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">Pacin</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">g</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">: </readpronunciation-span><readpronunciation-word original="dynamic" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">dynamic</readpronunciation-word></readpronunciation-text></div></div><div class="spec-section"><h4><readpronunciation-text original="Voiceover" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="Voiceover" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">Voic</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">over</readpronunciation-span></readpronunciation-word></readpronunciation-text></h4><ul class="spec-list"></ul></div><div class="spec-section"><h4><readpronunciation-text original="On-screen Text" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="On-screen" lang="en" part-of-speech-mapped="IN,IN,-,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">On-screen</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="Text" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Text</readpronunciation-word></readpronunciation-text></h4><ul class="spec-list"></ul></div><div class="spec-section"><h4><readpronunciation-text original="CTA Spec" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="CTA" lang="en" part-of-speech-mapped="NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">CTA</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="Spec" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Spec</readpronunciation-word></readpronunciation-text></h4><div><readpronunciation-text original="Text: Експериментуй. Живи. Смакуй." lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="Text" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Text</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">: Експериментуй. Живи. Смакуй.</readpronunciation-span></readpronunciation-text></div><div><readpronunciation-text original="Timestamp: 7s" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="Timestamp" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">Tim</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">stamp</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">: 7</readpronunciation-span><readpronunciation-word original="s" lang="en" part-of-speech-mapped="NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">s</readpronunciation-word></readpronunciation-text></div><div><readpronunciation-text original="Urgency: medium" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-word original="Urgency" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Urgency</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">: </readpronunciation-span><readpronunciation-word original="medium" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">medium</readpronunciation-word></readpronunciation-text></div></div></div><h3 style="">🎥 Промпт для генерації:</h3><div class="final-prompt"><readpronunciation-text original="Створи детальний сценарій 9с вертикального перформанс-відео для instagram/None.
+
+📋 КОНТЕКСТ:
+• Продукт/Оффер: додаток для планування харчування
+• Аудиторія: Зайняті батьки, які планують сімейні обіди
+• Мета кампанії: purchase
+• Тривалість: 9с
+• CTA: Експериментуй. Живи. Смакуй.
+
+🎬 КРЕАТИВНА КОНЦЕПЦІЯ:
+• Hook: Привертаючий увагу хук
+• Структура: hook-body-cta
+• Стиль: UGC
+• Формат: вертикальне 9:16 для мобільних
+
+📝 ПОТРІБНО СТВОРИТИ:
+
+1. HOOK (0-3с):
+   • Тип: text
+   • Опис: iPhone slowing down due to a specific error
+
+2. STRUCTURE (hook-body-cta):
+
+3. CTA:
+   • Текст: Експериментуй. Живи. Смакуй.
+   • Таймінг: 7с
+   • Urgency: medium
+
+4. PRODUCTION STYLE:
+   • Тип: UGC
+   • Pacing: dynamic
+
+🎯 ФОКУС НА PERFORMANCE:
+• Швидкий хук (перші 3с критичні для retention)
+• Чіткий value proposition
+• Сильний CTA з urgency
+• Оптимізація під instagram (вертикальний формат, текст читабельний на mobile)
+" lang="en" class="notranslate" translate="no" style="contain: layout style; display: inline !important; float: none !important; vertical-align: inherit;"><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">Створи детальний сценарій 9с вертикального перформанс</readpronunciation-span><readpronunciation-word original="-" lang="en" part-of-speech-mapped="-" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">-</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">відео для </readpronunciation-span><readpronunciation-word original="instagram" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">instagram</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">/</readpronunciation-span><readpronunciation-word original="None" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">Non</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">.
+
+📋 КОНТЕКСТ:
+• Продукт/Оффер: додаток для планування харчування
+• Аудиторія: Зайняті батьки, які планують сімейні обіди
+• Мета кампанії: </readpronunciation-span><readpronunciation-word original="purchase" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">purchas</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+• Тривалість: 9с
+• </readpronunciation-span><readpronunciation-word original="CTA" lang="en" part-of-speech-mapped="NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">CTA</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">: Експериментуй. Живи. Смакуй.
+
+🎬 КРЕАТИВНА КОНЦЕПЦІЯ:
+• </readpronunciation-span><readpronunciation-word original="Hook" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Hook</readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">: Привертаючий увагу хук
+• Структура: </readpronunciation-span><readpronunciation-word original="hook-body-cta" lang="en" part-of-speech-mapped="NN,NN,NN,NN,-,NN,NN,NN,NN,-,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">hook-body-cta</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+• Стиль: </readpronunciation-span><readpronunciation-word original="UGC" lang="en" part-of-speech-mapped="NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">UGC</readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">
+• Формат: вертикальне 9:16 для мобільних
+
+📝 ПОТРІБНО СТВОРИТИ:
+
+1. </readpronunciation-span><readpronunciation-word original="HOOK" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">HOOK</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> (0-3с):
+   • Тип: </readpronunciation-span><readpronunciation-word original="text" lang="en" part-of-speech-mapped="NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">text</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+   • Опис: </readpronunciation-span><readpronunciation-word original="iPhone" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">iPhon</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="slowing" lang="en" part-of-speech-mapped="VBG,VBG,VBG,VBG,VBG,VBG,VBG" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">slowin</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">g</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="down" lang="en" part-of-speech-mapped="RB,RB,RB,RB" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">down</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="due" lang="en" part-of-speech-mapped="JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">du</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="to" lang="en" part-of-speech-mapped="TO,TO" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">to</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="a" lang="en" part-of-speech-mapped="DT" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">a</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="specific" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">specific</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="error" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">error</readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">
+
+2. </readpronunciation-span><readpronunciation-word original="STRUCTURE" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">STRUCTUR</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">E</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> (</readpronunciation-span><readpronunciation-word original="hook-body-cta" lang="en" part-of-speech-mapped="NN,NN,NN,NN,-,NN,NN,NN,NN,-,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">hook-body-cta</readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">):
+
+3. </readpronunciation-span><readpronunciation-word original="CTA" lang="en" part-of-speech-mapped="NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">CTA</readpronunciation-word><readpronunciation-span style="vertical-align: inherit; display: inline !important; float: none !important;">:
+   • Текст: Експериментуй. Живи. Смакуй.
+   • Таймінг: 7с
+   • </readpronunciation-span><readpronunciation-word original="Urgency" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">Urgency</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">: </readpronunciation-span><readpronunciation-word original="medium" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">medium</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+
+4. </readpronunciation-span><readpronunciation-word original="PRODUCTION" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">PRODUCTION</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="STYLE" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">STYL</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">E</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">:
+   • Тип: </readpronunciation-span><readpronunciation-word original="UGC" lang="en" part-of-speech-mapped="NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">UGC</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+   • </readpronunciation-span><readpronunciation-word original="Pacing" lang="en" part-of-speech-mapped="VBG,VBG,VBG,VBG,VBG,VBG" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">Pacin</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">g</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">: </readpronunciation-span><readpronunciation-word original="dynamic" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">dynamic</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+
+🎯 ФОКУС НА </readpronunciation-span><readpronunciation-word original="PERFORMANCE" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">PERFORMANC</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">E</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">:
+• Швидкий хук (перші 3с критичні для </readpronunciation-span><readpronunciation-word original="retention" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">retention</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">)
+• Чіткий </readpronunciation-span><readpronunciation-word original="value" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">valu</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> </readpronunciation-span><readpronunciation-word original="proposition" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">proposition</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+• Сильний </readpronunciation-span><readpronunciation-word original="CTA" lang="en" part-of-speech-mapped="NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">CTA</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> з </readpronunciation-span><readpronunciation-word original="urgency" lang="en" part-of-speech-mapped="NN,NN,NN,NN,NN,NN,NN" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">urgency</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">
+• Оптимізація під </readpronunciation-span><readpronunciation-word original="instagram" lang="en" part-of-speech-mapped="NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP,NNP" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;">instagram</readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;"> (вертикальний формат, текст читабельний на </readpronunciation-span><readpronunciation-word original="mobile" lang="en" part-of-speech-mapped="JJ,JJ,JJ,JJ,JJ,JJ" class="notranslate" translate="no" style="display: inline !important; float: none !important; vertical-align: inherit; touch-action: manipulation;"><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">mobil</readpronunciation-span><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit; opacity: 0.33 !important;">e</readpronunciation-span></readpronunciation-word><readpronunciation-span style="display: inline !important; float: none !important; vertical-align: inherit;">)
+</readpronunciation-span></readpronunciation-text></div><button class="btn-submit" onclick="submitBrief()" style="">🚀 Відправити на генерацію</button></div></div>
+
+        <div class="input-area" style="">
+            <input type="text" class="input-field" id="messageInput" placeholder="Напиши своє повідомлення..." autocomplete="off">
+            <button class="btn-send" id="sendBtn" style="">Надіслати</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration - Get API base from environment or fallback to localhost
+        const getApiBase = () => {
+            // Check if environment is injected (for production builds)
+            if (typeof window !== 'undefined' && window.__ENV__) {
+                return window.__ENV__.NEXT_PUBLIC_API_BASE_URL + '/api/v1/chat-mvp';
+            }
+            // Fallback to localhost for development
+            return 'http://localhost:8000/api/v1/chat-mvp';
+        };
+        const API_BASE = getApiBase();
+
+        // State
+        let currentSessionId = null;
+        let currentBrief = null;
+        let currentPrompt = null;
+        let isTyping = false;
+        let allSessions = [];
+
+        // DOM elements
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const sessionInfo = document.getElementById('sessionInfo');
+        const completenessEl = document.getElementById('completeness');
+        const progressFill = document.getElementById('progressFill');
+        const sessionsList = document.getElementById('sessionsList');
+
+        // Initialize
+        async function init() {
+            // Check for session_id in URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id');
+            
+            await loadSessions();
+            
+            // If session_id provided, load that session
+            if (sessionId) {
+                await loadSession(sessionId);
+            }
+        }
+
+        // Load all sessions
+        async function loadSessions() {
+            try {
+                const response = await fetch(`${API_BASE}/sessions`);
+                if (!response.ok) throw new Error('Failed to load sessions');
+
+                const data = await response.json();
+                allSessions = data.sessions || [];
+
+                renderSessionsList();
+            } catch (error) {
+                console.error('Load sessions error:', error);
+                sessionsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #f44;">Помилка завантаження</div>';
+            }
+        }
+
+        // Render sessions list
+        function renderSessionsList() {
+            if (allSessions.length === 0) {
+                sessionsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Немає чатів</div>';
+                return;
+            }
+
+            sessionsList.innerHTML = allSessions.map(session => {
+                const date = new Date(session.updated_at);
+                const timeStr = date.toLocaleString('uk-UA', {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const product = session.known?.product_offer || 'Новий чат';
+                const isActive = session.session_id === currentSessionId;
+
+                return `
+                    <div class="session-item ${isActive ? 'active' : ''}" onclick="loadSession('${session.session_id}')">
+                        <div class="session-title">${product}</div>
+                        <div class="session-meta">
+                            <span>${timeStr}</span>
+                            <span class="session-status ${session.status}">${session.status}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Create new session
+        async function createNewSession() {
+            try {
+                const response = await fetch(`${API_BASE}/session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                if (!response.ok) throw new Error('Failed to create session');
+
+                const data = await response.json();
+                currentSessionId = data.session_id;
+                sessionInfo.textContent = `Session: ${currentSessionId.substring(0, 8)}...`;
+
+                // Enable input
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+
+                // Load session
+                await loadSessionMessages();
+                await loadSessions(); // Refresh list
+            } catch (error) {
+                console.error('Create session error:', error);
+                showError('Не вдалося створити сесію');
+            }
+        }
+
+        // Load session by ID
+        async function loadSession(sessionId) {
+            currentSessionId = sessionId;
+            
+            try {
+                const response = await fetch(`${API_BASE}/session/${sessionId}`);
+                if (!response.ok) throw new Error('Failed to load session');
+                const sessionData = await response.json();
+                
+                // Show session info with task link if available
+                let sessionText = `Session: ${sessionId.substring(0, 8)}...`;
+                if (sessionData.state.task_id) {
+                    sessionText += ` 📊 (linked to analysis)`;
+                }
+                sessionInfo.textContent = sessionText;
+            } catch (error) {
+                sessionInfo.textContent = `Session: ${sessionId.substring(0, 8)}...`;
+            }
+
+            // Enable input
+            messageInput.disabled = false;
+            sendBtn.disabled = false;
+
+            await loadSessionMessages();
+            renderSessionsList(); // Update active state
+        }
+
+        // Load session messages
+        async function loadSessionMessages() {
+            try {
+                const response = await fetch(`${API_BASE}/session/${currentSessionId}`);
+                if (!response.ok) throw new Error('Failed to load session');
+
+                const data = await response.json();
+
+                // Clear and render messages
+                messagesContainer.innerHTML = '';
+                data.messages.forEach(msg => {
+                    addMessage(msg.role, msg.text, new Date(msg.ts), false);
+                });
+
+                // Update completeness
+                updateCompleteness(data.state.completeness);
+            } catch (error) {
+                console.error('Load session error:', error);
+            }
+        }
+
+        // Send message
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || !currentSessionId || isTyping) return;
+
+            // Add user message
+            addMessage('user', message);
+            messageInput.value = '';
+
+            // Show typing
+            showTyping(true);
+
+            try {
+                const response = await fetch(`${API_BASE}/message`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: currentSessionId,
+                        message: message
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Request failed');
+                }
+
+                const data = await response.json();
+                showTyping(false);
+
+                if (data.type === 'ask') {
+                    handleAskResponse(data);
+                } else if (data.type === 'final') {
+                    handleFinalResponse(data);
+                }
+
+                // Refresh sessions list
+                await loadSessions();
+
+            } catch (error) {
+                showTyping(false);
+                console.error('Send message error:', error);
+                showError(error.message);
+            }
+        }
+
+        // Handle ask response
+        function handleAskResponse(data) {
+            // Add question
+            addMessage('assistant', data.reply);
+
+            // Add options if present
+            if (data.state.options && data.state.options.length > 0) {
+                addOptions(data.state.options);
+            }
+
+            // Add suggestions if present
+            if (data.state.suggestions && data.state.suggestions.length > 0) {
+                addSuggestions(data.state.suggestions);
+            }
+
+            // Add examples if present
+            if (data.state.examples && data.state.examples.length > 0) {
+                addExamples(data.state.examples);
+            }
+
+            // Add policy hints if present
+            if (data.state.policy_hints && data.state.policy_hints.length > 0) {
+                addPolicyHints(data.state.policy_hints);
+            }
+
+            updateCompleteness(data.state.completeness);
+        }
+
+        // Handle final response
+        function handleFinalResponse(data) {
+            addMessage('assistant', '✅ Чудово! Я зібрав всю необхідну інформацію.');
+            addFinalBrief(data.brief, data.final_prompt, data.state.creative_spec);
+            updateCompleteness(1.0);
+            currentBrief = data.brief;
+            currentPrompt = data.final_prompt;
+        }
+
+        // Add message to chat
+        function addMessage(role, text, timestamp = new Date(), scroll = true) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = role === 'user' ? '👤' : '🤖';
+
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            content.textContent = text;
+
+            const time = document.createElement('div');
+            time.className = 'message-time';
+            time.textContent = timestamp.toLocaleTimeString('uk-UA', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            content.appendChild(time);
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+
+            messagesContainer.appendChild(messageDiv);
+            if (scroll) messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Add options (quick-click buttons)
+        function addOptions(options) {
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'options-container';
+
+            options.forEach(option => {
+                const chip = document.createElement('button');
+                chip.className = 'option-chip';
+                chip.textContent = option;
+                chip.onclick = () => {
+                    messageInput.value = option;
+                    sendMessage();
+                };
+                optionsDiv.appendChild(chip);
+            });
+
+            messagesContainer.appendChild(optionsDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Add suggestions
+        function addSuggestions(suggestions) {
+            const container = document.createElement('div');
+            container.className = 'suggestions-container';
+
+            const title = document.createElement('div');
+            title.textContent = '💡 Пропозиції:';
+            title.style.fontWeight = 'bold';
+            title.style.marginBottom = '8px';
+            title.style.fontSize = '13px';
+            container.appendChild(title);
+
+            suggestions.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+
+                const text = typeof s === 'string' ? s : s.text;
+                const source = typeof s === 'object' ? s.source : 'default';
+
+                item.innerHTML = `
+                    ${text}
+                    <span class="suggestion-badge ${source}">${source === 'patterns' ? '🎯 З аналізу' : '💡 Best practice'}</span>
+                `;
+
+                item.onclick = () => {
+                    messageInput.value = text;
+                    messageInput.focus();
+                };
+
+                container.appendChild(item);
+            });
+
+            messagesContainer.appendChild(container);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Add examples
+        function addExamples(examples) {
+            const container = document.createElement('div');
+            container.className = 'examples-container';
+            container.innerHTML = '<strong>📝 Приклади:</strong>';
+
+            examples.forEach(ex => {
+                const item = document.createElement('div');
+                item.className = 'example-item';
+                item.textContent = `• ${ex}`;
+                container.appendChild(item);
+            });
+
+            messagesContainer.appendChild(container);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Add policy hints
+        function addPolicyHints(hints) {
+            const container = document.createElement('div');
+            container.className = 'policy-hints';
+
+            hints.forEach(hint => {
+                const item = document.createElement('div');
+                item.className = 'policy-hint';
+                item.textContent = typeof hint === 'string' ? hint : hint.text;
+                container.appendChild(item);
+            });
+
+            messagesContainer.appendChild(container);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Add final brief
+        function addFinalBrief(brief, prompt, creativeSpec) {
+            const briefDiv = document.createElement('div');
+            briefDiv.className = 'final-brief';
+
+            let html = `<h3>📋 Готовий бриф</h3>`;
+
+            // Basic brief fields
+            html += `<div class="brief-fields">`;
+            html += `<div class="brief-field"><strong>Продукт:</strong> ${brief.product_offer || 'N/A'}</div>`;
+            html += `<div class="brief-field"><strong>Аудиторія:</strong> ${brief.audience || 'N/A'}</div>`;
+            html += `<div class="brief-field"><strong>Мета:</strong> ${brief.objective || 'N/A'}</div>`;
+            html += `<div class="brief-field"><strong>Платформа:</strong> ${brief.platform || 'N/A'}</div>`;
+            html += `<div class="brief-field"><strong>Формат:</strong> ${brief.format || 'N/A'}</div>`;
+            html += `<div class="brief-field"><strong>Тривалість:</strong> ${brief.duration_s}s</div>`;
+            html += `<div class="brief-field"><strong>CTA:</strong> ${brief.cta || 'N/A'}</div>`;
+            html += `</div>`;
+
+            // Creative spec if present
+            if (creativeSpec) {
+                html += `<div class="creative-spec">`;
+                html += `<h3>🎬 Креативна специфікація</h3>`;
+
+                if (creativeSpec.hook) {
+                    html += `<div class="spec-section">`;
+                    html += `<h4>Hook</h4>`;
+                    html += `<div>Тип: ${creativeSpec.hook.type || 'N/A'}</div>`;
+                    html += `<div>Опис: ${creativeSpec.hook.description || 'N/A'}</div>`;
+                    html += `</div>`;
+                }
+
+                if (creativeSpec.structure) {
+                    html += `<div class="spec-section">`;
+                    html += `<h4>Structure</h4>`;
+                    html += `<div>${creativeSpec.structure}</div>`;
+                    html += `</div>`;
+                }
+
+                if (creativeSpec.style) {
+                    html += `<div class="spec-section">`;
+                    html += `<h4>Style</h4>`;
+                    html += `<div>Production: ${creativeSpec.style.production || 'N/A'}</div>`;
+                    html += `<div>Pacing: ${creativeSpec.style.pacing || 'N/A'}</div>`;
+                    html += `</div>`;
+                }
+
+                if (creativeSpec.voiceover) {
+                    html += `<div class="spec-section">`;
+                    html += `<h4>Voiceover</h4>`;
+                    html += `<ul class="spec-list">`;
+                    creativeSpec.voiceover.forEach(line => {
+                        html += `<li>${line}</li>`;
+                    });
+                    html += `</ul></div>`;
+                }
+
+                if (creativeSpec.on_screen_text) {
+                    html += `<div class="spec-section">`;
+                    html += `<h4>On-screen Text</h4>`;
+                    html += `<ul class="spec-list">`;
+                    creativeSpec.on_screen_text.forEach(text => {
+                        html += `<li>${text}</li>`;
+                    });
+                    html += `</ul></div>`;
+                }
+
+                if (creativeSpec.cta_spec) {
+                    html += `<div class="spec-section">`;
+                    html += `<h4>CTA Spec</h4>`;
+                    html += `<div>Text: ${creativeSpec.cta_spec.text}</div>`;
+                    html += `<div>Timestamp: ${creativeSpec.cta_spec.timestamp}s</div>`;
+                    html += `<div>Urgency: ${creativeSpec.cta_spec.urgency}</div>`;
+                    html += `</div>`;
+                }
+
+                html += `</div>`;
+            }
+
+            // Final prompt
+            html += `<h3>🎥 Промпт для генерації:</h3>`;
+            html += `<div class="final-prompt">${prompt}</div>`;
+
+            html += `<button class="btn-submit" onclick="submitBrief()">🚀 Відправити на генерацію</button>`;
+
+            briefDiv.innerHTML = html;
+            messagesContainer.appendChild(briefDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Submit brief
+        async function submitBrief() {
+            if (!currentBrief || !currentPrompt) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: currentSessionId,
+                        final_prompt: currentPrompt,
+                        brief: currentBrief
+                    })
+                });
+
+                if (!response.ok) throw new Error('Submit failed');
+
+                const data = await response.json();
+
+                const successDiv = document.createElement('div');
+                successDiv.className = 'success-message';
+                successDiv.textContent = `✅ Бриф відправлено! Job ID: ${data.job_id}`;
+                messagesContainer.appendChild(successDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            } catch (error) {
+                console.error('Submit error:', error);
+                showError('Не вдалося відправити бриф');
+            }
+        }
+
+        // Show typing indicator
+        function showTyping(show) {
+            isTyping = show;
+            sendBtn.disabled = show;
+
+            let typingIndicator = document.getElementById('typingIndicator');
+
+            if (show && !typingIndicator) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message assistant';
+                messageDiv.id = 'typingIndicator';
+
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                avatar.textContent = '🤖';
+
+                const indicator = document.createElement('div');
+                indicator.className = 'typing-indicator active';
+                indicator.innerHTML = `
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                `;
+
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(indicator);
+                messagesContainer.appendChild(messageDiv);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            } else if (!show && typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        // Update completeness
+        function updateCompleteness(value) {
+            const percent = Math.round(value * 100);
+            completenessEl.textContent = `${percent}%`;
+            progressFill.style.width = `${percent}%`;
+        }
+
+        // Show error
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = `❌ Помилка: ${message}`;
+            messagesContainer.appendChild(errorDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Event listeners
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Initialize on load
+        init();
+    </script>
+
+
+</body></html>

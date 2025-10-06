@@ -1,0 +1,23 @@
+{
+  "functions": {
+    "scripts/prepare-html.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_BASE_URL": "$NEXT_PUBLIC_API_BASE_URL"
+    }
+  },
+  "headers": [
+    {
+      "source": "/chat-mvp-demo.html",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { PresentationQR } from './QRCode';
 import {
   TitleSlide,
   titleSlideConfig,
@@ -99,10 +100,11 @@ const PitchPresentation = () => {
   return (
     <div className="w-full h-screen flex flex-col">
       {/* Main slide area */}
-      <div className={`flex-1 ${slides[currentSlide].bg} p-12 flex items-center justify-center overflow-auto`}>
+      <div className={`flex-1 ${slides[currentSlide].bg} p-12 flex items-center justify-center overflow-auto relative`}>
         <div className="w-full max-w-7xl">
           {slides[currentSlide].content}
         </div>
+        <PresentationQR position="top-right" size="xl" />
       </div>
 
       {/* Navigation */}
